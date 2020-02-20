@@ -1,3 +1,2 @@
 #!/bin/sh
-buildozer android release
-
+buildozer android release <<< y

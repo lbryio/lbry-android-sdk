@@ -1,2 +1,2 @@
 #!/bin/sh
-buildozer android debug
+buildozer android debug <<< y
