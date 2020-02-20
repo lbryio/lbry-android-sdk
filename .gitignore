@@ -15,3 +15,7 @@ src/main/assets/index.android.bundle.meta
 lbry-android.keystore
 p4a/pythonforandroid/bootstraps/lbry/build/templates/google-services.json
 .gitsecret/keys/random_seed
+
+p4a/*.apk
+p4a/*.aar
+
