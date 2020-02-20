@@ -25,7 +25,6 @@ build arm64 aar:
     - cp -f $CI_PROJECT_DIR/scripts/build-target-python.sh ~/.buildozer/android/crystax-ndk-10.3.2/build/tools/build-target-python.sh
     - cp -f $CI_PROJECT_DIR/scripts/mangled-glibc-syscalls__arm64.h ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21/arch-arm64/usr/include/crystax/bionic/libc/include/sys/mangled-glibc-syscalls.h
     - rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
-    - git secret reveal
     - mv buildozer.spec.arm64.ci buildozer.spec
     - mkdir -p $CI_PROJECT_DIR/src/main/assets/blockchain && wget -q https://headers.lbry.io/blockchain_headers_latest -O $CI_PROJECT_DIR/src/main/assets/blockchain/headers
     - "./build-release.sh | grep -Fv -e 'working:' -e 'copy' -e 'Compiling' --line-buffered"
@@ -54,7 +53,6 @@ build arm aar:
     - cp -f $CI_PROJECT_DIR/scripts/build-target-python.sh ~/.buildozer/android/crystax-ndk-10.3.2/build/tools/build-target-python.sh
     - cp -f $CI_PROJECT_DIR/scripts/mangled-glibc-syscalls.h ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21/arch-arm/usr/include/crystax/bionic/libc/include/sys/mangled-glibc-syscalls.h
     - rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
-    - git secret reveal
     - mv buildozer.spec.arm.ci buildozer.spec
     - mkdir -p $CI_PROJECT_DIR/src/main/assets/blockchain && wget -q https://headers.lbry.io/blockchain_headers_latest -O $CI_PROJECT_DIR/src/main/assets/blockchain/headers
     - "./build-release.sh | grep -Fv -e 'working:' -e 'copy' -e 'Compiling' --line-buffered"
