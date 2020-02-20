@@ -11,8 +11,9 @@ No installation required as this is a dev library.
 1. Open your project in Android Studio.
 1. File > New > New Module...
 1. Select Import .JAR / .AAR Package and click Next
-1. Select the lbrysdk-<version>-<debug|release>.aar package from the location you built or downloaded it to
+1. Select the `lbrysdk-<version>-<debug|release>.aar` package from the location you built or downloaded it to where `version` is the sdk version and `<debug|release>` is either `debug` or `release`.
 1. Click Finish
+1. Add `implementation project(':lbrysdk-<version>-<debug|release>')` to the `build.gradle` configuration for the main app module.
 
 ### Using the SDK
 Add the `FOREGROUND_SERVICE` and `INTERNET` permissions to `AndroidManifest.xml` if they are not yet added.
