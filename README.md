@@ -1,5 +1,5 @@
 # LBRY Android SDK
-[![pipeline status](https://ci.lbry.tech/lbry/lbry-android-sdk/badges/master/pipeline.svg)](https://ci.lbry.tech/lbry/lbry-android/commits/master)
+[![pipeline status](https://ci.lbry.tech/lbry/lbry-android-sdk/badges/master/pipeline.svg)](https://ci.lbry.tech/lbry/lbry-android-sdk/commits/master)
 [![GitHub license](https://img.shields.io/github/license/lbryio/lbry-android-sdk)](https://github.com/lbryio/lbry-android/blob/master/LICENSE)
 
 The LBRY SDK packaged as an Android AAR library which can be used in any Android Studio project.
