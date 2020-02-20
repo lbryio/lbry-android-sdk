@@ -1,24 +1,40 @@
-# LBRY Android
-[![pipeline status](https://ci.lbry.tech/lbry/lbry-android/badges/master/pipeline.svg)](https://ci.lbry.tech/lbry/lbry-android/commits/master)
-[![GitHub license](https://img.shields.io/github/license/lbryio/lbry-android)](https://github.com/lbryio/lbry-android/blob/master/LICENSE)
+# LBRY Android SDK
+[![pipeline status](https://ci.lbry.tech/lbry/lbry-android-sdk/badges/master/pipeline.svg)](https://ci.lbry.tech/lbry/lbry-android/commits/master)
+[![GitHub license](https://img.shields.io/github/license/lbryio/lbry-android-sdk)](https://github.com/lbryio/lbry-android/blob/master/LICENSE)
 
-An Android browser and wallet for the [LBRY](https://lbry.com) network. This app bundles [lbrynet-daemon](https://github.com/lbryio/lbry) as a background service with a UI layer built with React Native. The APK is built using buildozer and the Gradle build tool.
-
-
-<img src="https://spee.ch/@lbry:3f/android-08-homepage.gif" alt="LBRY Android GIF" width="384px" />
-
+The LBRY SDK packaged as an Android AAR library which can be used in any Android Studio project.
 
 ## Installation
-The minimum supported Android version is 5.0 Lollipop. There are two ways to install:
-
-1. Via the Google Play Store. Anyone can join the [open beta](https://play.google.com/apps/testing/io.lbry.browser) in order to install the app from the Play Store.
-1. Direct APK install available at [http://build.lbry.io/android/latest.apk](http://build.lbry.io/android/latest.apk). You will need to enable installation from third-party sources on your device in order to install from this source.
+No installation required as this is a dev library.
 
 ## Usage
-The app can be launched by opening **LBRY Browser** from the device's app drawer or via the shortcut on the home screen if that was created upon installation.
+1. Open your project in Android Studio.
+1. File > New > New Module...
+1. Select Import .JAR / .AAR Package and click Next
+1. Select the lbrysdk-<version>-<debug|release>.aar package from the location you built or downloaded it to
+1. Click Finish
+
+### Using the SDK
+Add the `FOREGROUND_SERVICE` and `INTERNET` permissions to `AndroidManifest.xml` if they are not yet added.
+```
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.INTERNET" />
+```
+Add the `android:usesCleartextTraffic="true"` attribute to the `application` tag in `AndroidManifest.xml`.
+Import the required classes to be able to start up the service.
+```
+import io.lbry.lbrysdk.LbrynetService;
+import io.lbry.lbrysdk.ServiceHelper;
+```
+Add code to launch the service.
+```
+Context context = getApplicationContext();
+ServiceHelper.start(context, "", LbrynetService.class, "lbrynetservice");
+```
+
 
 ## Running from Source
-The app is built from source via [Buildozer](https://github.com/kivy/buildozer). After cloning the repository, copy `buildozer.spec.sample` to `buildozer.spec` and modify this file as necessary for your environment. Please see [BUILD.md](BUILD.md) for detailed build instructions.
+The library can be built from source using [Buildozer](https://github.com/lbryio/buildozer). After cloning the repository, copy `buildozer.spec.sample` to `buildozer.spec` and modify this file as necessary for your environment. Please see [BUILD.md](BUILD.md) for detailed build instructions.
 
 ## Contributing
 Contributions to this project are welcome, encouraged, and compensated. For more details, see https://lbry.io/faq/contributing
