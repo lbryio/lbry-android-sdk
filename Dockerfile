@@ -11,14 +11,10 @@ RUN dpkg --add-architecture i386 && \
       autoconf autogen automake libtool libffi-dev build-essential \
       ccache git libncurses5:i386 libstdc++6:i386 \
       libgtk2.0-0:i386 libpangox-1.0-0:i386 libpangoxft-1.0-0:i386 libidn11:i386
-RUN npm install -g npm@latest
-RUN npm install -g yarn react-native-cli && \
-    pip2 install --upgrade cython setuptools && \
+RUN pip2 install --upgrade cython setuptools && \
     pip2 install git+https://github.com/lbryio/buildozer.git@master && \
     ln -s /src/scripts/build-docker.sh /usr/local/bin/build && \
     adduser lbry-android --gecos GECOS --shell /bin/bash --disabled-password --home /home/lbry-android && \
-    mkdir /home/lbry-android/.npm-packages && \
-    echo "prefix=/home/lbry-android/.npm-packages" > /home/lbry-android/.npmrc && \
     chown -R lbry-android:lbry-android /home/lbry-android && \
     mkdir /src && \
     chown lbry-android:lbry-android /src && \

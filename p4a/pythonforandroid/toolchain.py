@@ -868,9 +868,8 @@ class ToolchainCL(object):
                 # gradle output apks somewhere else
                 # and don't have version in file
                 apk_dir = join(dist.dist_dir,
-                               "build", "outputs", "apk",
-                               args.build_mode)
-                apk_glob = "*-{}.apk"
+                               "build", "outputs", "aar")
+                apk_glob = "*-{}.aar"
                 apk_add_version = True
 
             else:
@@ -884,14 +883,14 @@ class ToolchainCL(object):
                 output = shprint(ant, args.build_mode, _tail=20,
                                  _critical=True, _env=env)
                 apk_dir = join(dist.dist_dir, "bin")
-                apk_glob = "*-*-{}.apk"
+                apk_glob = "*-*-{}.aar"
                 apk_add_version = False
 
             self.hook("after_apk_assemble")
 
-        info_main('# Copying APK to current directory')
+        info_main('# Copying android package to current directory')
 
-        apk_re = re.compile(r'.*Package: (.*\.apk)$')
+        apk_re = re.compile(r'.*Package: (.*\.aar)$')
         apk_file = None
         for line in reversed(output.splitlines()):
             m = apk_re.match(line)
@@ -900,7 +899,7 @@ class ToolchainCL(object):
                 break
 
         if not apk_file:
-            info_main('# APK filename not found in build output. Guessing...')
+            info_main('# AAR not found in build output. Guessing...')
             if args.build_mode == "release":
                 suffixes = ("release", "release-unsigned")
             else:
@@ -909,20 +908,20 @@ class ToolchainCL(object):
                 apks = glob.glob(join(apk_dir, apk_glob.format(suffix)))
                 if apks:
                     if len(apks) > 1:
-                        info('More than one built APK found... guessing you '
+                        info('More than one built AAR found... guessing you '
                              'just built {}'.format(apks[-1]))
                     apk_file = apks[-1]
                     break
             else:
-                raise BuildInterruptingException('Couldn\'t find the built APK')
+                raise BuildInterruptingException('Couldn\'t find the built AAR')
 
-        info_main('# Found APK file: {}'.format(apk_file))
+        info_main('# Found AAR file: {}'.format(apk_file))
         if apk_add_version:
-            info('# Add version number to APK')
+            info('# Add version number to AAR')
             apk_name, apk_suffix = basename(apk_file).split("-", 1)
             apk_file_dest = "{}-{}-{}".format(
                 apk_name, build_args.version, apk_suffix)
-            info('# APK renamed to {}'.format(apk_file_dest))
+            info('# AAR renamed to {}'.format(apk_file_dest))
             shprint(sh.cp, apk_file, apk_file_dest)
         else:
             shprint(sh.cp, apk_file, './')

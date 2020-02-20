@@ -404,12 +404,7 @@ main.py that loads it.''')
         android_api=android_api,
         build_tools_version=build_tools_version)
 
-    render('settings.gradle', 'settings.gradle')
-
     render('gradle.properties', 'gradle.properties')
-
-    ## google-services.json for firebase
-    render('google-services.json', 'google-services.json')
 
     # copy icon drawables
     for folder in ('drawable-hdpi', 'drawable-mdpi', 'drawable-xhdpi', 'drawable-xxhdpi', 'drawable-xxxhdpi'):

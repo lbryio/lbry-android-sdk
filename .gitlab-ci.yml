@@ -4,7 +4,7 @@ stages:
   - deploy
   - release
 
-build arm64 apk:
+build arm64 aar:
   stage: build
   image: lbry/android-base:latest
   before_script:
@@ -13,14 +13,11 @@ build arm64 apk:
     - git submodule update --init --force --recursive
   artifacts:
     paths:
-      - bin/browser-*-release__arm64.apk
+      - bin/lbrysdk-*-release__arm64.aar
     expire_in: 1 week
   script:
     - export PATH=/usr/bin:$PATH
     - echo "$PGP_PRIVATE_KEY" | gpg --batch --import
-    - cd app
-    - npm install
-    - cd ..
     - wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.buildozer/android/
     - tar -xf ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz -C ~/.buildozer/android/
     - rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
@@ -31,11 +28,11 @@ build arm64 apk:
     - git secret reveal
     - mv buildozer.spec.arm64.ci buildozer.spec
     - mkdir -p $CI_PROJECT_DIR/src/main/assets/blockchain && wget -q https://headers.lbry.io/blockchain_headers_latest -O $CI_PROJECT_DIR/src/main/assets/blockchain/headers
-    - "./release.sh | grep -Fv -e 'working:' -e 'copy' -e 'Compiling' --line-buffered"
-    - cp $CI_PROJECT_DIR/bin/browser-$BUILD_VERSION-release.apk $CI_PROJECT_DIR/bin/browser-$BUILD_VERSION-release__arm64.apk
-    - cp $CI_PROJECT_DIR/bin/browser-$BUILD_VERSION-release.apk /dev/null
+    - "./build-release.sh | grep -Fv -e 'working:' -e 'copy' -e 'Compiling' --line-buffered"
+    - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release__arm64.aar
+    - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar /dev/null
 
-build arm apk:
+build arm aar:
   stage: build2
   image: lbry/android-base:latest
   before_script:
@@ -44,15 +41,12 @@ build arm apk:
     - git submodule update --init --force --recursive
   artifacts:
     paths:
-      - bin/browser-*-release__arm.apk
+      - bin/lbrysdk-*-release__arm.aar
     expire_in: 1 week
   script:
     - export PATH=/usr/bin:$PATH
     - echo "$PGP_PRIVATE_KEY" | gpg --batch --import
-    - cd app
-    - npm install
-    - cd ..
-    - wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.buildozer/android/
+    - wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.f.ozer/android/
     - tar -xf ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz -C ~/.buildozer/android/
     - rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
     - ln -s ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21 ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
@@ -63,40 +57,38 @@ build arm apk:
     - git secret reveal
     - mv buildozer.spec.arm.ci buildozer.spec
     - mkdir -p $CI_PROJECT_DIR/src/main/assets/blockchain && wget -q https://headers.lbry.io/blockchain_headers_latest -O $CI_PROJECT_DIR/src/main/assets/blockchain/headers
-    - "./release.sh | grep -Fv -e 'working:' -e 'copy' -e 'Compiling' --line-buffered"
-    - cp $CI_PROJECT_DIR/bin/browser-$BUILD_VERSION-release.apk $CI_PROJECT_DIR/bin/browser-$BUILD_VERSION-release__arm.apk
-    - cp $CI_PROJECT_DIR/bin/browser-$BUILD_VERSION-release.apk /dev/null
+    - "./build-release.sh | grep -Fv -e 'working:' -e 'copy' -e 'Compiling' --line-buffered"
+    - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release__arm.aar
+    - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar /dev/null
 
 deploy build.lbry.io:
   image: python:latest
   stage: deploy
   dependencies:
-    - build arm apk
-    - build arm64 apk
+    - build arm aar
+    - build arm64 aar
   before_script:
     - pip install awscli
     - export BUILD_VERSION=$(cat $CI_PROJECT_DIR/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
-    - export BUILD_APK_FILENAME__32=browser-$BUILD_VERSION-release__arm.apk
-    - export BUILD_APK_FILENAME__64=browser-$BUILD_VERSION-release__arm64.apk
+    - export BUILD_APK_FILENAME__32=lbrysdk-$BUILD_VERSION-release__arm.aar
+    - export BUILD_APK_FILENAME__64=lbrysdk-$BUILD_VERSION-release__arm64.aar
   script:
     - aws s3 cp bin/$BUILD_APK_FILENAME__64 s3://build.lbry.io/android/build-${CI_PIPELINE_IID}_commit-${CI_COMMIT_SHA:0:7}/$BUILD_APK_FILENAME__64
     - aws s3 cp bin/$BUILD_APK_FILENAME__32 s3://build.lbry.io/android/build-${CI_PIPELINE_IID}_commit-${CI_COMMIT_SHA:0:7}/$BUILD_APK_FILENAME__32
-    - aws s3 cp bin/$BUILD_APK_FILENAME__64 s3://build.lbry.io/android/push.apk
 
-release apk:
+release aar:
   image: python:latest
   stage: release
   only:
     - tags
   dependencies:
-    - build arm apk
-    - build arm64 apk
+    - build arm aar
+    - build arm64 aar
   before_script:
     - pip install awscli githubrelease
     - export BUILD_VERSION=$(cat $CI_PROJECT_DIR/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
-    - export BUILD_APK_FILENAME__32=browser-$BUILD_VERSION-release__arm.apk
-    - export BUILD_APK_FILENAME__64=browser-$BUILD_VERSION-release__arm64.apk
+    - export BUILD_APK_FILENAME__32=lbrysdk-$BUILD_VERSION-release__arm.aar
+    - export BUILD_APK_FILENAME__64=lbrysdk-$BUILD_VERSION-release__arm64.aar
   script:
-    - githubrelease release lbryio/lbry-android create $CI_COMMIT_TAG --publish bin/$BUILD_APK_FILENAME__64 bin/$BUILD_APK_FILENAME__32
-    - githubrelease release lbryio/lbry-android edit $CI_COMMIT_TAG --draft
-    - aws s3 cp bin/$BUILD_APK_FILENAME__64 s3://build.lbry.io/android/latest.apk
+    - githubrelease release lbryio/lbry-android-sdk create $CI_COMMIT_TAG --publish bin/$BUILD_APK_FILENAME__64 bin/$BUILD_APK_FILENAME__32
+    - githubrelease release lbryio/lbry-android-sdk edit $CI_COMMIT_TAG --draft
