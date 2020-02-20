@@ -50,11 +50,11 @@ public final class DownloadManager {
     private static boolean channelCreated = false;
 
     private static NotificationCompat.Builder groupBuilder = null;
-    
+
     public static final String NOTIFICATION_ID_KEY = "io.lbry.browser.notificationId";
 
     public static final String ACTION_NOTIFICATION_DELETED = "io.lbry.browser.ACTION_NOTIFICATION_DELETED";
-    
+
     public static final String ACTION_DOWNLOAD_EVENT = "io.lbry.browser.ACTION_DOWNLOAD_EVENT";
 
     public static final String ACTION_START = "start";

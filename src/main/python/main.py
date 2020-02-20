@@ -1,5 +1,5 @@
 # going forward, this should match sdk version
-__version__ = "0.58.0"
+__version__ = "0.60.0"
 
 class ServiceApp(App):
     def build(self):
@@ -7,7 +7,6 @@ class ServiceApp(App):
 
         Intent = autoclass('android.content.Intent')
         LbrynetService = autoclass('io.lbry.lbrysdk.LbrynetService')
-        
+
 if __name__ == '__main__':
     ServiceApp().run()
-
