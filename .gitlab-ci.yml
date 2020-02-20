@@ -67,8 +67,8 @@ deploy build.lbry.io:
     - export BUILD_APK_FILENAME__32=lbrysdk-$BUILD_VERSION-release__arm.aar
     - export BUILD_APK_FILENAME__64=lbrysdk-$BUILD_VERSION-release__arm64.aar
   script:
-    - aws s3 cp bin/$BUILD_APK_FILENAME__64 s3://build.lbry.io/android/build-${CI_PIPELINE_IID}_commit-${CI_COMMIT_SHA:0:7}/$BUILD_APK_FILENAME__64
-    - aws s3 cp bin/$BUILD_APK_FILENAME__32 s3://build.lbry.io/android/build-${CI_PIPELINE_IID}_commit-${CI_COMMIT_SHA:0:7}/$BUILD_APK_FILENAME__32
+    - aws s3 cp bin/$BUILD_APK_FILENAME__64 s3://build.lbry.io/android/sdk-build-${CI_PIPELINE_IID}_commit-${CI_COMMIT_SHA:0:7}/$BUILD_APK_FILENAME__64
+    - aws s3 cp bin/$BUILD_APK_FILENAME__32 s3://build.lbry.io/android/sdk-build-${CI_PIPELINE_IID}_commit-${CI_COMMIT_SHA:0:7}/$BUILD_APK_FILENAME__32
 
 release aar:
   image: python:latest
