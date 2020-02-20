@@ -40,7 +40,7 @@ build arm aar:
     expire_in: 1 week
   script:
     - export PATH=/usr/bin:$PATH
-    - wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.f.ozer/android/
+    - wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.buildozer/android/
     - tar -xf ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz -C ~/.buildozer/android/
     - rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
     - ln -s ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21 ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
