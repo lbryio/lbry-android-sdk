@@ -2,10 +2,10 @@
 
 (
     ANDROID_STUDIO_SDK=${ANDROID_STUDIO_SDK:-$HOME/Android/Sdk}
-    LBRY_ANDROID_HOME=${LBRY_ANDROID_HOME:-$HOME/git/vendor/lbryio/lbry-android}
+    LBRY_ANDROID_HOME=${LBRY_ANDROID_HOME:-$HOME/git/vendor/lbryio/lbry-android-sdk}
     LBRY_ANDROID_BUILDOZER_HOME=${LBRY_ANDROID_BUILDOZER_HOME:-$LBRY_ANDROID_HOME/.buildozer}
     LBRY_ANDROID_BUILDOZER_DOWNLOADS=${LBRY_ANDROID_BUILDOZER_DOWNLOADS:-$LBRY_ANDROID_HOME/.buildozer-downloads}
-    LBRY_ANDROID_REPO=${LBRY_ANDROID_REPO:-https://www.github.com/lbryio/lbry-android}
+    LBRY_ANDROID_REPO=${LBRY_ANDROID_REPO:-https://www.github.com/lbryio/lbry-android-sdk}
     LBRY_ANDROID_IMAGE=${LBRY_ANDROID_IMAGE:-lbry-android:local}
 
     ## Logger utility:
@@ -65,10 +65,10 @@
             mkdir -p $LBRY_ANDROID_BUILDOZER_DOWNLOADS
             exe sudo docker run --rm -it \
                 -v $LBRY_ANDROID_HOME:/src \
-                -v $LBRY_ANDROID_BUILDOZER_HOME:/home/lbry-android/.buildozer/ \
-                -v $LBRY_ANDROID_BUILDOZER_DOWNLOADS:/home/lbry-android/.buildozer-downloads/ \
+                -v $LBRY_ANDROID_BUILDOZER_HOME:/home/lbry-android-sdk/.buildozer/ \
+                -v $LBRY_ANDROID_BUILDOZER_DOWNLOADS:/home/lbry-android-sdk/.buildozer-downloads/ \
                 $LBRY_ANDROID_IMAGE \
-                /home/lbry-android/bin/setup
+                /home/lbry-android-sdk/bin/setup
         fi
     }
 
@@ -96,9 +96,9 @@
         mkdir -p $LBRY_ANDROID_HOME/.gradle
         exe sudo docker run --rm -it \
             -v $LBRY_ANDROID_HOME:/src \
-            -v $LBRY_ANDROID_BUILDOZER_HOME:/home/lbry-android/.buildozer/ \
-            -v $LBRY_ANDROID_HOME/.gradle:/home/lbry-android/.gradle/ \
-            -v $ANDROID_SDK_LICENSE:/home/lbry-android/.buildozer/android/platform/android-sdk-23/licenses/android-sdk-license \
+            -v $LBRY_ANDROID_BUILDOZER_HOME:/home/lbry-android-sdk/.buildozer/ \
+            -v $LBRY_ANDROID_HOME/.gradle:/home/lbry-android-sdk/.gradle/ \
+            -v $ANDROID_SDK_LICENSE:/home/lbry-android-sdk/.buildozer/android/platform/android-sdk-23/licenses/android-sdk-license \
              $LBRY_ANDROID_IMAGE
     }
 
@@ -122,9 +122,9 @@
     clean() {
         exe sudo docker run --rm -it \
             -v $LBRY_ANDROID_HOME:/src \
-            -v $LBRY_ANDROID_BUILDOZER_HOME:/home/lbry-android/.buildozer/ \
-            -v $LBRY_ANDROID_HOME/.gradle:/home/lbry-android/.gradle/ \
-            -v $ANDROID_SDK_LICENSE:/home/lbry-android/.buildozer/android/platform/android-sdk-23/licenses/android-sdk-license \
+            -v $LBRY_ANDROID_BUILDOZER_HOME:/home/lbry-android-sdk/.buildozer/ \
+            -v $LBRY_ANDROID_HOME/.gradle:/home/lbry-android-sdk/.gradle/ \
+            -v $ANDROID_SDK_LICENSE:/home/lbry-android-sdk/.buildozer/android/platform/android-sdk-23/licenses/android-sdk-license \
             $LBRY_ANDROID_IMAGE /bin/bash -c "cd /src && buildozer android clean"
     }
 
@@ -164,4 +164,3 @@
         echo "##     - Builds the lbry-android apk"
     fi
 )
-

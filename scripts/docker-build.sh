@@ -3,7 +3,7 @@ set -e
 
 exe() { ( echo "## $*"; $*; ) }
 
-ANDROID_SDK_LICENSE=/home/lbry-android/.buildozer/android/platform/android-sdk-23/licenses/android-sdk-license
+ANDROID_SDK_LICENSE=/home/lbry-android-sdk/.buildozer/android/platform/android-sdk-23/licenses/android-sdk-license
 ## VERSION and REPO variables are optional:
 ## Use 'none' as a way to detect that none was provided by the user:
 VERSION=${VERSION:-none}
@@ -49,7 +49,7 @@ if [ $VERSION != "none" ] || [ $REPO != "none" ]; then
         VERSION=master
     fi
     if [ $REPO == "none" ]; then
-        REPO="https://github.com/lbryio/lbry-android.git"
+        REPO="https://github.com/lbryio/lbry-android-sdk.git"
     fi
 
     ## Clone from $REPO and checkout $VERSION:

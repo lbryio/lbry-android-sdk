@@ -18,8 +18,8 @@ from lbry.extras.daemon.loggly_handler import get_loggly_handler
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-lbrynet_android_utils = autoclass('io.lbry.browser.Utils')
-service = autoclass('io.lbry.browser.LbrynetService').serviceInstance
+lbrynet_android_utils = autoclass('io.lbry.lbrysdk.Utils')
+service = autoclass('io.lbry.lbrysdk.LbrynetService').serviceInstance
 platform.platform = lambda: 'Android %s (API %s)' % (lbrynet_android_utils.getAndroidRelease(), lbrynet_android_utils.getAndroidSdk())
 build_info.BUILD = 'dev' if lbrynet_android_utils.isDebug() else 'release'
 
