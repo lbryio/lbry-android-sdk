@@ -85,6 +85,7 @@ def start():
         components_to_skip=[DHT_COMPONENT, HASH_ANNOUNCER_COMPONENT, PEER_PROTOCOL_SERVER_COMPONENT],
         save_blobs=False,
         save_files=False,
+        share_usage_data=True,
         use_upnp=False
     )
 
