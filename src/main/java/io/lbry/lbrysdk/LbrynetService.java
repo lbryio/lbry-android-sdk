@@ -74,10 +74,12 @@ public final class LbrynetService extends PythonService {
 
     public static LbrynetService serviceInstance;
 
+    private static boolean DHTEnabled;
+
     private static final int SDK_POLL_INTERVAL = 1000; // 1 second
 
     private PendingIntent pendingContextIntent;
-    
+
     private BroadcastReceiver stopServiceReceiver;
 
     private BroadcastReceiver downloadReceiver;
@@ -134,28 +136,28 @@ public final class LbrynetService extends PythonService {
         };
         registerReceiver(downloadReceiver, downloadFilter);
     }
-    
+
     public void setPendingContextIntent(PendingIntent pendingIntent) {
         this.pendingContextIntent = pendingIntent;
-        
+
         // update the notification with the context intent
         Notification notification = buildNotification();
         NotificationManager notificationManager =
             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(1, notification);
     }
-    
+
     private Notification buildNotification() {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
         if (pendingContextIntent != null) {
             builder.setContentIntent(pendingContextIntent);
         }
-        
+
         Intent stopIntent = new Intent(ACTION_STOP_SERVICE);
         PendingIntent stopPendingIntent = PendingIntent.getBroadcast(this, 0, stopIntent, 0);
-        
+
         String serviceDescription = "The LBRY service is running in the background.";
-        Notification notification = builder.setColor(ContextCompat.getColor(this, R.color.lbryGreen))                       
+        Notification notification = builder.setColor(ContextCompat.getColor(this, R.color.lbryGreen))
                                            .setContentText(serviceDescription)
                                            .setGroup(GROUP_SERVICE)
                                            .setWhen(System.currentTimeMillis())
@@ -567,5 +569,13 @@ public final class LbrynetService extends PythonService {
                 Log.w("python", e);
             }
         }
+    }
+
+    public static void setDHTEnabled(boolean enabled) {
+        DHTEnabled = enabled;
+    }
+
+    public static boolean isDHTEnabled() {
+        return DHTEnabled;
     }
 }

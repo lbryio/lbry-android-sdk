@@ -19,7 +19,8 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 lbrynet_android_utils = autoclass('io.lbry.lbrysdk.Utils')
-service = autoclass('io.lbry.lbrysdk.LbrynetService').serviceInstance
+service_class = autoclass('io.lbry.lbrysdk.LbrynetService')
+service = service_class.serviceInstance
 platform.platform = lambda: 'Android %s (API %s)' % (lbrynet_android_utils.getAndroidRelease(), lbrynet_android_utils.getAndroidSdk())
 build_info.BUILD = 'dev' if lbrynet_android_utils.isDebug() else 'release'
 
@@ -76,13 +77,16 @@ def start():
     keyring.set_keyring(LbryAndroidKeyring())
     private_storage_dir = lbrynet_android_utils.getAppInternalStorageDir(service.getApplicationContext())
     configured_download_dir = lbrynet_android_utils.getConfiguredDownloadDirectory(service.getApplicationContext())
+    components_to_skip = []
+    if not service_class.isDHTEnabled():
+        components_to_skip = [DHT_COMPONENT, HASH_ANNOUNCER_COMPONENT, PEER_PROTOCOL_SERVER_COMPONENT]
 
     conf = Config(
         data_dir=f'{private_storage_dir}/lbrynet',
         wallet_dir=f'{private_storage_dir}/lbryum',
         download_dir=configured_download_dir,
         blob_lru_cache_size=32,
-        components_to_skip=[DHT_COMPONENT, HASH_ANNOUNCER_COMPONENT, PEER_PROTOCOL_SERVER_COMPONENT],
+        components_to_skip=components_to_skip,
         save_blobs=False,
         save_files=False,
         share_usage_data=True,
