@@ -70,6 +70,8 @@ public final class LbrynetService extends PythonService {
 
     public static final String NOTIFICATION_CHANNEL_ID = "io.lbry.browser.DAEMON_NOTIFICATION_CHANNEL";
 
+    public static final String LBRY_SDK_SERVICE_STARTED = "io.lbry.lbrysdk.LBRY_SDK_SERVICE_STARTED";
+
     public static String TAG = "LbrynetService";
 
     public static LbrynetService serviceInstance;
@@ -471,6 +473,10 @@ public final class LbrynetService extends PythonService {
             intent = ServiceHelper.buildIntent(
                 getApplicationContext(), "", LbrynetService.class, "lbrynetservice");
         }
+
+        // send a broadcast indicating that the service has started
+        Intent startedIntent = new Intent(LBRY_SDK_SERVICE_STARTED);
+        sendBroadcast(startedIntent);
 
         // no need to iterate the checks repeatedly here, because this is service startup
         checkDownloads();

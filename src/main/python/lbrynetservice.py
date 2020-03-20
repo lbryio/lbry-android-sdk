@@ -19,8 +19,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 lbrynet_android_utils = autoclass('io.lbry.lbrysdk.Utils')
-service_class = autoclass('io.lbry.lbrysdk.LbrynetService')
-service = service_class.serviceInstance
+service = autoclass('io.lbry.lbrysdk.LbrynetService').serviceInstance
 platform.platform = lambda: 'Android %s (API %s)' % (lbrynet_android_utils.getAndroidRelease(), lbrynet_android_utils.getAndroidSdk())
 build_info.BUILD = 'dev' if lbrynet_android_utils.isDebug() else 'release'
 
@@ -78,7 +77,17 @@ def start():
     private_storage_dir = lbrynet_android_utils.getAppInternalStorageDir(service.getApplicationContext())
     configured_download_dir = lbrynet_android_utils.getConfiguredDownloadDirectory(service.getApplicationContext())
     components_to_skip = []
-    if not service_class.isDHTEnabled():
+
+    dht_state = 'off'
+    try:
+        dht_path = f'{private_storage_dir}/dht';
+        with open(dht_path, 'r') as file:
+            dht_state = file.read()
+    except:
+        pass
+
+    dht_enabled = dht_state == 'on'
+    if not dht_enabled:
         components_to_skip = [DHT_COMPONENT, HASH_ANNOUNCER_COMPONENT, PEER_PROTOCOL_SERVER_COMPONENT]
 
     conf = Config(
@@ -97,7 +106,6 @@ def start():
         ensure_directory_exists(directory)
 
     configure_logging(conf)
-
     log.info('Starting lbry sdk {}'.format(lbrynet_version));
 
     loop = asyncio.get_event_loop()
