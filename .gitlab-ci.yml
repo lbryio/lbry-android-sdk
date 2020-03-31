@@ -23,7 +23,6 @@ build arm64 aar:
     - cp -f $CI_PROJECT_DIR/scripts/mangled-glibc-syscalls__arm64.h ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21/arch-arm64/usr/include/crystax/bionic/libc/include/sys/mangled-glibc-syscalls.h
     - rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
     - mv buildozer.spec.arm64.ci buildozer.spec
-    - mkdir -p $CI_PROJECT_DIR/src/main/assets/blockchain && wget -q https://headers.lbry.io/blockchain_headers_latest -O $CI_PROJECT_DIR/src/main/assets/blockchain/headers
     - chmod u+x ./build-release.sh
     - "./build-release.sh | grep -Fv -e 'working:' -e 'copy' -e 'Compiling' --line-buffered"
     - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release__arm64.aar
@@ -49,7 +48,6 @@ build arm aar:
     - cp -f $CI_PROJECT_DIR/scripts/mangled-glibc-syscalls.h ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21/arch-arm/usr/include/crystax/bionic/libc/include/sys/mangled-glibc-syscalls.h
     - rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
     - mv buildozer.spec.arm.ci buildozer.spec
-    - mkdir -p $CI_PROJECT_DIR/src/main/assets/blockchain && wget -q https://headers.lbry.io/blockchain_headers_latest -O $CI_PROJECT_DIR/src/main/assets/blockchain/headers
     - chmod u+x ./build-release.sh
     - "./build-release.sh | grep -Fv -e 'working:' -e 'copy' -e 'Compiling' --line-buffered"
     - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release__arm.aar
