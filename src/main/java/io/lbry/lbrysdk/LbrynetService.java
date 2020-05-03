@@ -59,17 +59,11 @@ public final class LbrynetService extends PythonService {
     public static final int SERVICE_NOTIFICATION_GROUP_ID = 5;
 
     public static final String ACTION_STOP_SERVICE = "io.lbry.browser.ACTION_STOP_SERVICE";
-
     public static final String ACTION_CHECK_DOWNLOADS = "io.lbry.browser.ACTION_CHECK_DOWNLOADS";
-
     public static final String ACTION_QUEUE_DOWNLOAD = "io.lbry.browser.ACTION_QUEUE_DOWNLOAD";
-
     public static final String ACTION_DELETE_DOWNLOAD = "io.lbry.browser.ACTION_DELETE_DOWNLOAD";
-
     public static final String GROUP_SERVICE = "io.lbry.browser.GROUP_SERVICE";
-
     public static final String NOTIFICATION_CHANNEL_ID = "io.lbry.browser.DAEMON_NOTIFICATION_CHANNEL";
-
     public static final String LBRY_SDK_SERVICE_STARTED = "io.lbry.lbrysdk.LBRY_SDK_SERVICE_STARTED";
 
     public static String TAG = "LbrynetService";
@@ -109,7 +103,20 @@ public final class LbrynetService extends PythonService {
         stopServiceReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                LbrynetService.this.stopSelf();
+                NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                manager.cancelAll();
+
+                // graceful shutdown
+                (new AsyncTask<Void, Void, Void>() {
+                    protected Void doInBackground(Void... params) {
+                        try {
+                            Utils.sdkCall("stop");
+                        } catch (ConnectException ex) {
+                            // pass
+                        }
+                        return null;
+                    }
+                }).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
         };
         registerReceiver(stopServiceReceiver, intentFilter);
