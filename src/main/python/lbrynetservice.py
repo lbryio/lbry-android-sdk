@@ -6,6 +6,8 @@ import platform
 import sys
 import lbry.wallet
 
+from aiohttp.web import GracefulExit
+
 from jnius import autoclass
 from keyring.backend import KeyringBackend
 from lbry import __version__ as lbrynet_version, build_info
@@ -119,6 +121,7 @@ def start():
         pass
     finally:
         loop.run_until_complete(daemon.stop())
+        logging.shutdown()
     if hasattr(loop, 'shutdown_asyncgens'):
         loop.run_until_complete(loop.shutdown_asyncgens())
 
