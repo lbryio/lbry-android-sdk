@@ -20,55 +20,42 @@ import java.util.List;
 import java.util.Random;
 
 public final class DownloadManager {
+    private static DownloadManager instance;
+
     private Context context;
-
     private List<String> activeDownloads = new ArrayList<String>();
-
     private List<String> completedDownloads = new ArrayList<String>();
-
     private Map<String, String> downloadIdOutpointsMap = new HashMap<String, String>();
 
     // maintain a map of uris to writtenBytes, so that we check if it's changed and don't flood RN with update events every 500ms
     private Map<String, Double> writtenDownloadBytes = new HashMap<String, Double>();
-
     private HashMap<Integer, NotificationCompat.Builder> builders = new HashMap<Integer, NotificationCompat.Builder>();
-
     private HashMap<String, Integer> downloadIdNotificationIdMap = new HashMap<String, Integer>();
-
     private HashMap<String, Boolean> stoppedDownloadsMap = new HashMap<String, Boolean>();
-
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#");
-
     private static final int MAX_FILENAME_LENGTH = 20;
-
     private static final int MAX_PROGRESS = 100;
-
     private static final String GROUP_DOWNLOADS = "io.lbry.browser.GROUP_DOWNLOADS";
-
     private static final String NOTIFICATION_CHANNEL_ID = "io.lbry.browser.DOWNLOADS_NOTIFICATION_CHANNEL";
-
     private static boolean channelCreated = false;
-
     private static NotificationCompat.Builder groupBuilder = null;
 
     public static final String NOTIFICATION_ID_KEY = "io.lbry.browser.notificationId";
-
     public static final String ACTION_NOTIFICATION_DELETED = "io.lbry.browser.ACTION_NOTIFICATION_DELETED";
-
     public static final String ACTION_DOWNLOAD_EVENT = "io.lbry.browser.ACTION_DOWNLOAD_EVENT";
-
     public static final String ACTION_START = "start";
-
     public static final String ACTION_COMPLETE = "complete";
-
     public static final String ACTION_UPDATE = "update";
-
     public static final int DOWNLOAD_NOTIFICATION_GROUP_ID = 20;
-
     public static boolean groupCreated = false;
 
     public DownloadManager(Context context) {
         this.context = context;
+        instance = this;
+    }
+
+    public static DownloadManager getInstance() {
+        return instance;
     }
 
     private int generateNotificationId() {

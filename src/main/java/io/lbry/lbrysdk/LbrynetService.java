@@ -57,7 +57,6 @@ import org.renpy.android.ResourceManager;
 public final class LbrynetService extends PythonService {
 
     public static final int SERVICE_NOTIFICATION_GROUP_ID = 5;
-
     public static final String ACTION_STOP_SERVICE = "io.lbry.browser.ACTION_STOP_SERVICE";
     public static final String ACTION_CHECK_DOWNLOADS = "io.lbry.browser.ACTION_CHECK_DOWNLOADS";
     public static final String ACTION_QUEUE_DOWNLOAD = "io.lbry.browser.ACTION_QUEUE_DOWNLOAD";
@@ -65,25 +64,16 @@ public final class LbrynetService extends PythonService {
     public static final String GROUP_SERVICE = "io.lbry.browser.GROUP_SERVICE";
     public static final String NOTIFICATION_CHANNEL_ID = "io.lbry.browser.DAEMON_NOTIFICATION_CHANNEL";
     public static final String LBRY_SDK_SERVICE_STARTED = "io.lbry.lbrysdk.LBRY_SDK_SERVICE_STARTED";
-
     public static String TAG = "LbrynetService";
-
     public static LbrynetService serviceInstance;
 
     private static boolean DHTEnabled;
-
     private static final int SDK_POLL_INTERVAL = 1000; // 1 second
-
     private PendingIntent pendingContextIntent;
-
     private BroadcastReceiver stopServiceReceiver;
-
     private BroadcastReceiver downloadReceiver;
-
     private DownloadManager downloadManager;
-
     private ScheduledExecutorService taskExecutor;
-
     private ScheduledFuture taskExecutorHandle = null;
 
     private boolean streamManagerReady = false;
