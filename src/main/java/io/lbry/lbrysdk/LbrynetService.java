@@ -76,7 +76,7 @@ public final class LbrynetService extends PythonService {
     private ScheduledExecutorService taskExecutor;
     private ScheduledFuture taskExecutorHandle = null;
 
-    private boolean streamManagerReady = false;
+    private boolean fileManagerReady = false;
 
     @Override
     public boolean canDisplayNotification() {
@@ -208,7 +208,7 @@ public final class LbrynetService extends PythonService {
 
     private void pollFileList() {
         try {
-            if (!streamManagerReady) {
+            if (!fileManagerReady) {
                 String statusResponse = Utils.sdkCall("status");
                 if (statusResponse != null) {
                     JSONObject status = new JSONObject(statusResponse);
@@ -219,13 +219,13 @@ public final class LbrynetService extends PythonService {
                         JSONObject result = status.getJSONObject("result");
                         if (result.has("startup_status")) {
                             JSONObject startupStatus = result.getJSONObject("startup_status");
-                            streamManagerReady = startupStatus.has("stream_manager") && startupStatus.getBoolean("stream_manager");
+                            fileManagerReady = startupStatus.has("file_manager") && startupStatus.getBoolean("file_manager");
                         }
                     }
                 }
             }
 
-            if (streamManagerReady) {
+            if (fileManagerReady) {
                 Map<String, Object> params = new HashMap<String, Object>();
                 params.put("page_size", 100);
                 params.put("reverse", true);
