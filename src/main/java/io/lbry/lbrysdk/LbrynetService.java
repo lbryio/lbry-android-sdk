@@ -482,6 +482,14 @@ public final class LbrynetService extends PythonService {
     }
 
     @Override
+    public void cleanupNotifications() {
+        Context context = getApplicationContext();
+        NotificationManager notificationManager =
+            (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancelAll();
+    }
+
+    @Override
     public void onDestroy() {
         if (downloadReceiver != null) {
             unregisterReceiver(downloadReceiver);
@@ -493,11 +501,7 @@ public final class LbrynetService extends PythonService {
             stopServiceReceiver = null;
         }
 
-        Context context = getApplicationContext();
-        NotificationManager notificationManager =
-            (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancelAll();
-
+        cleanupNotifications();
         super.onDestroy();
         serviceInstance = null;
     }

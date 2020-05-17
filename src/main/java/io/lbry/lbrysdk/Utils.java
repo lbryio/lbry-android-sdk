@@ -353,7 +353,7 @@ public final class Utils {
             if (params != null) {
                 JSONObject requestParams = new JSONObject();
                 for (Map.Entry<String, Object> entry : params.entrySet()) {
-                    requestParams.put(entry.getKey(), entry.getValue());
+                    requestParams.put(entry.getKey(), entry.getValue() == null ? JSONObject.NULL : entry.getValue());
                 }
                 request.put("params", requestParams);
             }
