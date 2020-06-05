@@ -56,6 +56,8 @@ import org.renpy.android.ResourceManager;
  */
 public final class LbrynetService extends PythonService {
 
+    public static final String LBRY_SDK_VERSION = "0.75.0";
+
     public static final int SERVICE_NOTIFICATION_GROUP_ID = 5;
     public static final String ACTION_STOP_SERVICE = "io.lbry.browser.ACTION_STOP_SERVICE";
     public static final String ACTION_CHECK_DOWNLOADS = "io.lbry.browser.ACTION_CHECK_DOWNLOADS";
