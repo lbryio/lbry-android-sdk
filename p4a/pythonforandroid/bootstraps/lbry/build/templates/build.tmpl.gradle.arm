@@ -98,6 +98,7 @@ subprojects {
 
 publish {
     userOrg = 'lbryio'
+    repoName = 'io.lbry'
     groupId = 'io.lbry'
     artifactId = 'lbrysdk32'
     publishVersion = '{{args.version}}'
