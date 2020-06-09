@@ -862,7 +862,12 @@ class ToolchainCL(object):
                 else:
                     raise BuildInterruptingException(
                         "Unknown build mode {} for apk()".format(args.build_mode))
-                output = shprint(gradlew, "--console=plain", gradle_task, _tail=20,
+                output = shprint(gradlew, "--console=plain", gradle_task,
+                                 "bintrayUpload",
+                                 "-PbintrayUser=$BINTRAY_USERNAME",
+                                 "-PbintrayKey=$BINTRAY_KEY",
+                                 "-PdryRun=false",
+                                 _tail=20,
                                  _critical=True, _env=env)
 
                 # gradle output apks somewhere else
