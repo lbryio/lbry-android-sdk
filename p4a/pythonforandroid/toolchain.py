@@ -845,6 +845,8 @@ class ToolchainCL(object):
                 # gradle-based build
                 env["ANDROID_NDK_HOME"] = self.ctx.ndk_dir
                 env["ANDROID_HOME"] = self.ctx.sdk_dir
+                env["BINTRAY_USERNAME"] = environ.get("BINTRAY_USERNAME")
+                env["BINTRAY_KEY"] = environ.get("BINTRAY_KEY")
 
                 gradlew = sh.Command('./gradlew')
                 if exists('/usr/bin/dos2unix'):
