@@ -159,6 +159,7 @@ def shprint(command, *args, **kwargs):
     columns = get_console_width()
     command_path = str(command).split('/')
     command_string = command_path[-1]
+
     string = ' '.join(['{}->{} running'.format(Out_Fore.LIGHTBLACK_EX,
                                                Out_Style.RESET_ALL),
                        command_string] + list(args))
