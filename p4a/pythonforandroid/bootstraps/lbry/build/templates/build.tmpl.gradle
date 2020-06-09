@@ -102,6 +102,7 @@ publish {
     groupId = 'io.lbry'
     artifactId = 'lbrysdk64'
     publishVersion = '{{args.version}}'
+    licences = ['MIT']
     desc = 'LBRY SDK packaged as Android AAR (64-bit)'
     website = 'https://github.com/lbryio/lbry-android-sdk'
 }

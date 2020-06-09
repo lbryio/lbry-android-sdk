@@ -867,6 +867,7 @@ class ToolchainCL(object):
                 output = shprint(gradlew, "--console=plain", gradle_task,
                                  "bintrayUpload",
                                  "-PdryRun=false",
+                                 "-Poverride=true",
                                  _tail=20,
                                  _critical=True, _env=env)
 
