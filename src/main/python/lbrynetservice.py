@@ -12,10 +12,8 @@ from jnius import autoclass
 from keyring.backend import KeyringBackend
 from lbry import __version__ as lbrynet_version, build_info
 from lbry.conf import Config
-from lbry.extras.daemon.loggly_handler import get_loggly_handler
 from lbry.extras.daemon.components import DHT_COMPONENT, HASH_ANNOUNCER_COMPONENT, PEER_PROTOCOL_SERVER_COMPONENT
 from lbry.extras.daemon.daemon import Daemon
-from lbry.extras.daemon.loggly_handler import get_loggly_handler
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -69,10 +67,6 @@ def configure_logging(conf):
     logging.getLogger('aiohttp').setLevel(logging.CRITICAL)
     logging.getLogger('lbry').setLevel(logging.DEBUG if lbrynet_android_utils.isDebug() else logging.INFO)
     logging.getLogger('torba').setLevel(logging.INFO)
-
-    loggly_handler = get_loggly_handler(conf)
-    loggly_handler.setLevel(logging.ERROR)
-    logging.getLogger('lbry').addHandler(loggly_handler)
 
 def start():
     keyring.set_keyring(LbryAndroidKeyring())
