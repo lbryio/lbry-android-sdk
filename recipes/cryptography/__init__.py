@@ -8,6 +8,7 @@ class CryptographyRecipe(CompiledComponentsPythonRecipe):
     url = 'https://github.com/pyca/cryptography/archive/{version}.tar.gz'
     depends = [('python2', 'python3crystax'), 'openssl', 'idna', 'pyasn1', 'six', 'setuptools', 'ipaddress', 'cffi']
     call_hostpython_via_targetpython = False
+    patches = ['libpthread.patch']
 
     def get_recipe_env(self, arch):
         env = super(CryptographyRecipe, self).get_recipe_env(arch)

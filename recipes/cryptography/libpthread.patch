@@ -1,0 +1,16 @@
+diff --git a/src/_cffi_src/build_openssl.py b/src/_cffi_src/build_openssl.py
+index 35ccd6b..6d5ee4c 100755
+--- a/src/_cffi_src/build_openssl.py
++++ b/src/_cffi_src/build_openssl.py
+@@ -42,10 +42,7 @@ def _get_openssl_libraries(platform):
+         # -lpthread required due to usage of pthread an potential
+         # existance of a static part containing e.g. pthread_atfork
+         # (https://github.com/pyca/cryptography/issues/5084)
+-        if sys.platform == "zos":
+-            return ["ssl", "crypto"]
+-        else:
+-            return ["ssl", "crypto", "pthread"]
++        return ["ssl", "crypto"]
+ 
+ 
+ def _extra_compile_args(platform):
