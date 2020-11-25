@@ -88,7 +88,7 @@ def start():
     sud_state = 'false'
     try:
         sud_path = f'{private_storage_dir}/sud';
-        with open(sud_state, 'r') as file:
+        with open(sud_path, 'r') as file:
             sud_state = file.read()
     except Exception:
         pass
