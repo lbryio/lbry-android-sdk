@@ -74,6 +74,7 @@ def start():
     configured_download_dir = lbrynet_android_utils.getConfiguredDownloadDirectory(service.getApplicationContext())
     components_to_skip = []
 
+    # dht state
     dht_state = 'off'
     try:
         dht_path = f'{private_storage_dir}/dht';
@@ -82,7 +83,19 @@ def start():
     except:
         pass
 
+
+    # share_usage_data state
+    sud_state = 'false'
+    try:
+        sud_path = f'{private_storage_dir}/sud';
+        with open(sud_state, 'r') as file:
+            sud_state = file.read()
+    except Exception:
+        pass
+
     dht_enabled = dht_state == 'on'
+    share_usage_data = sud_state == 'true'
+
     if not dht_enabled:
         components_to_skip = [DHT_COMPONENT, HASH_ANNOUNCER_COMPONENT, PEER_PROTOCOL_SERVER_COMPONENT]
 
@@ -94,7 +107,7 @@ def start():
         components_to_skip=components_to_skip,
         save_blobs=False,
         save_files=False,
-        share_usage_data=True,
+        share_usage_data=share_usage_data,
         use_upnp=False
     )
 
