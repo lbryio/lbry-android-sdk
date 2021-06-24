@@ -865,6 +865,7 @@ class ToolchainCL(object):
                     raise BuildInterruptingException(
                         "Unknown build mode {} for apk()".format(args.build_mode))
                 output = shprint(gradlew, "--console=plain", gradle_task,
+                                 "uploadArchives",
                                  _tail=20,
                                  _critical=True, _env=env)
 

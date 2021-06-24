@@ -107,6 +107,14 @@ nexus {
     snapshotRepositoryUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
 }
 
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            pom.artifactId = "lbrysdk64"
+        }
+    }
+}
+
 dependencies {
     {%- for aar in aars %}
     compile(name: '{{ aar }}', ext: 'aar')
