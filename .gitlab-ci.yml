@@ -14,6 +14,7 @@ build arm64 aar:
       - bin/lbrysdk-*-release__arm64.aar
     expire_in: 1 week
   script:
+    - export NEXUS_SIGNING_KEYRING_FILE=$CI_PROJECT_DIR/signing.pgp
     - export PATH=/usr/bin:$PATH
     - wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.buildozer/android/
     - tar -xf ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz -C ~/.buildozer/android/
@@ -38,6 +39,7 @@ build arm aar:
       - bin/lbrysdk-*-release__arm.aar
     expire_in: 1 week
   script:
+    - export NEXUS_SIGNING_KEYRING_FILE=$CI_PROJECT_DIR/signing.pgp
     - export PATH=/usr/bin:$PATH
     - wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.buildozer/android/
     - tar -xf ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz -C ~/.buildozer/android/
