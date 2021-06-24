@@ -3,11 +3,12 @@ buildscript {
     repositories {
         jcenter()
         google()
+        mavenCentral()
         maven { url "https://jitpack.io" }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.4.2'
-        classpath 'com.novoda:bintray-release:0.9.2'
+        classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
     }
 }
 
@@ -24,7 +25,11 @@ allprojects {
 }
 
 apply plugin: 'com.android.library'
-apply plugin: 'com.novoda.bintray-release'
+apply plugin: 'com.bmuschko.nexus'
+
+archivesBaseName = 'lbrysdk64'
+group = "io.lbry"
+version = "{{ args.version }}"
 
 android {
     compileSdkVersion {{ android_api }}
@@ -96,15 +101,10 @@ subprojects {
     }
 }
 
-publish {
-    userOrg = 'lbryio'
-    repoName = 'io.lbry'
-    groupId = 'io.lbry'
-    artifactId = 'lbrysdk64'
-    publishVersion = '{{args.version}}'
-    licences = ['MIT']
-    desc = 'LBRY SDK packaged as Android AAR (64-bit)'
-    website = 'https://github.com/lbryio/lbry-android-sdk'
+nexus {
+    sign = true
+    repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+    snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
 }
 
 dependencies {
