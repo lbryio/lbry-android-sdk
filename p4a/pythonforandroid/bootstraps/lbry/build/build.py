@@ -404,7 +404,10 @@ main.py that loads it.''')
         android_api=android_api,
         build_tools_version=build_tools_version)
 
-    render('gradle.properties', 'gradle.properties')
+    render(
+        'gradle.properties',
+        'gradle.properties',
+        env=os.environ)
 
     # copy icon drawables
     for folder in ('drawable-hdpi', 'drawable-mdpi', 'drawable-xhdpi', 'drawable-xxhdpi', 'drawable-xxxhdpi'):
