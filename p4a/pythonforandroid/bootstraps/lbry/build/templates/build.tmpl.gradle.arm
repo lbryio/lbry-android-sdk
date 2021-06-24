@@ -107,11 +107,12 @@ nexus {
     snapshotRepositoryUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
 }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            pom.artifactId = "lbrysdk32"
-        }
+modifyPom {
+    project {
+        name 'LBRY SDK for Android'
+        description 'The LBRY SDK packaged as an Android AAR'
+        groupId 'io.lbry'
+        artifactId 'lbrysdk32'
     }
 }
 
