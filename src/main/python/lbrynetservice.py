@@ -1,4 +1,10 @@
 import asyncio
+import certifi
+import os
+
+# Let cacert.pem be found
+os.environ["SSL_CERT_FILE"] = certifi.where()
+
 import keyring
 import logging
 import pathlib
