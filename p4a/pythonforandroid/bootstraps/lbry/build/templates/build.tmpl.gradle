@@ -124,10 +124,9 @@ afterEvaluate {
                 artifactId 'lbrysdk64'
                 version '{{ args.version }}'
 
-                from components.all
+                from components.release
                 
-                artifact androidSourcesJar
-                artifact javadocJar
+                artifact bundleReleaseAar
 
                 pom {
                     name = 'LBRY SDK for Android'
