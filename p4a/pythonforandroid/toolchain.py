@@ -845,8 +845,6 @@ class ToolchainCL(object):
                 # gradle-based build
                 env["ANDROID_NDK_HOME"] = self.ctx.ndk_dir
                 env["ANDROID_HOME"] = self.ctx.sdk_dir
-                env["ORG_GRADLE_PROJECT_bintrayUser"] = environ.get("BINTRAY_USER")
-                env["ORG_GRADLE_PROJECT_bintrayKey"] = environ.get("BINTRAY_KEY")
 
                 gradlew = sh.Command('./gradlew')
                 if exists('/usr/bin/dos2unix'):
@@ -865,7 +863,7 @@ class ToolchainCL(object):
                     raise BuildInterruptingException(
                         "Unknown build mode {} for apk()".format(args.build_mode))
                 output = shprint(gradlew, "--console=plain", gradle_task,
-                                 "uploadArchives",
+                                 "publishReleasePublicationToSonatypeRepository",
                                  _tail=20,
                                  _critical=True, _env=env)
 
