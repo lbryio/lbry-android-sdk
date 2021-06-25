@@ -31,6 +31,39 @@ archivesBaseName = 'lbrysdk'
 group = "io.lbry"
 version = "{{ args.version }}"
 
+project(':lbrysdk') {
+    modifyPom {
+        project {
+            name 'LBRY SDK for Android'
+            description 'The LBRY SDK packaged as an Android AAR'
+            groupId 'io.lbry'
+            artifactId 'lbrysdk64'
+            
+            scm {
+                url 'https://github.com/lbryio/lbry-android-sdk'
+                connection 'scm:https://github.com/lbryio/lbry-android-sdk.git'
+                developerConnection 'scm:git://github.com/lbryio/lbry-android-sdk.git'
+            }
+            
+            licenses {
+                license {
+                    name 'MIT License'
+                    url 'https://raw.githubusercontent.com/lbryio/lbry-android-sdk/master/LICENSE'
+                    distribution 'repo'
+                }
+            }
+            
+            developers {
+                developer {
+                    id 'shockr'
+                    name 'Akinwale Ariwodola'
+                    email 'akinwale@lbry.com'
+                }
+            }
+        }
+    }
+}
+
 android {
     compileSdkVersion {{ android_api }}
     buildToolsVersion '{{ build_tools_version }}'
@@ -105,37 +138,6 @@ nexus {
     sign = true
     repositoryUrl = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
     snapshotRepositoryUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
-}
-
-modifyPom {
-    project {
-        name 'LBRY SDK for Android'
-        description 'The LBRY SDK packaged as an Android AAR'
-        groupId 'io.lbry'
-        artifactId 'lbrysdk64'
-        
-        scm {
-            url 'https://github.com/lbryio/lbry-android-sdk'
-            connection 'scm:https://github.com/lbryio/lbry-android-sdk.git'
-            developerConnection 'scm:git://github.com/lbryio/lbry-android-sdk.git'
-        }
-        
-        licenses {
-            license {
-                name 'MIT License'
-                url 'https://raw.githubusercontent.com/lbryio/lbry-android-sdk/master/LICENSE'
-                distribution 'repo'
-            }
-        }
-        
-        developers {
-            developer {
-                id 'shockr'
-                name 'Akinwale Ariwodola'
-                email 'akinwale@lbry.com'
-            }
-        }
-    }
 }
 
 dependencies {
