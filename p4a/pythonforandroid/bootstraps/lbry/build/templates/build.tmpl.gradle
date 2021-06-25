@@ -126,8 +126,6 @@ afterEvaluate {
 
                 from components.release
                 
-                artifact bundleReleaseAar
-
                 pom {
                     name = 'LBRY SDK for Android'
                     description = 'The LBRY SDK packaged as an Android AAR'
