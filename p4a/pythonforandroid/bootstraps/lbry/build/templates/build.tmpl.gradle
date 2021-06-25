@@ -8,7 +8,6 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.4.2'
-        classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
     }
 }
 
@@ -24,10 +23,14 @@ allprojects {
     }
 }
 
-apply plugin: 'com.android.library'
-apply plugin: 'com.bmuschko.nexus'
+plugins {
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+}
 
-archivesBaseName = 'lbrysdk'
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
 group = "io.lbry"
 version = "{{ args.version }}"
 
@@ -97,33 +100,61 @@ subprojects {
                 compileSdkVersion {{ android_api }}
                 buildToolsVersion '{{ build_tools_version }}'
             }
-            modifyPom {
-                project {
-                    name 'LBRY SDK for Android'
-                    description 'The LBRY SDK packaged as an Android AAR'
-                    groupId 'io.lbry'
-                    artifactId 'lbrysdk64'
-                    
-                    scm {
-                        url 'https://github.com/lbryio/lbry-android-sdk'
-                        connection 'scm:https://github.com/lbryio/lbry-android-sdk.git'
-                        developerConnection 'scm:git://github.com/lbryio/lbry-android-sdk.git'
-                    }
-                    
+        }
+    }
+}
+
+nexusPublishing {
+    repositories {
+        sonatype {
+            stagingProfileId = sonatypeStagingProfileId
+            username = ossrhUsername
+            password = ossrhPassword
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+        }
+    }
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                groupId 'io.lbry'
+                artifactId 'lbrysdk64'
+                version {{ args.version }}
+
+                if (project.plugins.findPlugin("com.android.library")) {
+                    from components.release
+                } else {
+                    from components.java
+                }
+
+                artifact androidSourcesJar
+                artifact javadocJar
+
+                pom {
+                    name = 'LBRY SDK for Android'
+                    description = 'The LBRY SDK packaged as an Android AAR'
+                    url = 'https://github.com/lbryio/lbry-android-sdk'
                     licenses {
                         license {
-                            name 'MIT License'
-                            url 'https://raw.githubusercontent.com/lbryio/lbry-android-sdk/master/LICENSE'
-                            distribution 'repo'
+                            name = 'MIT License'
+                            url = 'https://raw.githubusercontent.com/lbryio/lbry-android-sdk/master/LICENSE'
                         }
                     }
-                    
                     developers {
                         developer {
-                            id 'shockr'
+                            id 'akinwale'
                             name 'Akinwale Ariwodola'
                             email 'akinwale@lbry.com'
                         }
+                    }
+
+                    scm {
+                        url 'https://github.com/lbryio/lbry-android-sdk'
+                        connection 'scm:git:github.com/lbryio/lbry-android-sdk.git'
+                        developerConnection 'scm:git:ssh://github.com/lbryio/lbry-android-sdk.git'
                     }
                 }
             }
@@ -131,10 +162,8 @@ subprojects {
     }
 }
 
-nexus {
-    sign = true
-    repositoryUrl = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
-    snapshotRepositoryUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+signing {
+    sign publishing.publications
 }
 
 dependencies {
