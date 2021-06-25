@@ -7,7 +7,7 @@ buildscript {
         maven { url "https://jitpack.io" }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.2'
+        classpath 'com.android.tools.build:gradle:3.6.4'
     }
 }
 
@@ -140,16 +140,16 @@ afterEvaluate {
                     }
                     developers {
                         developer {
-                            id 'akinwale'
-                            name 'Akinwale Ariwodola'
-                            email 'akinwale@lbry.com'
+                            id = 'akinwale'
+                            name = 'Akinwale Ariwodola'
+                            email = 'akinwale@lbry.com'
                         }
                     }
 
                     scm {
-                        url 'https://github.com/lbryio/lbry-android-sdk'
-                        connection 'scm:git:github.com/lbryio/lbry-android-sdk.git'
-                        developerConnection 'scm:git:ssh://github.com/lbryio/lbry-android-sdk.git'
+                        url = 'https://github.com/lbryio/lbry-android-sdk'
+                        connection = 'scm:git:github.com/lbryio/lbry-android-sdk.git'
+                        developerConnection = 'scm:git:ssh://github.com/lbryio/lbry-android-sdk.git'
                     }
                 }
             }
