@@ -125,11 +125,7 @@ afterEvaluate {
                 artifactId 'lbrysdk32'
                 version '{{ args.version }}'
 
-                if (project.plugins.findPlugin("com.android.library")) {
-                    from components.release
-                } else {
-                    from components.java
-                }
+                from components.all
 
                 artifact androidSourcesJar
                 artifact javadocJar
