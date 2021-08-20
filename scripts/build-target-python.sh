@@ -350,7 +350,11 @@ build_python_for_abi ()
             echo "    --with-threads \\"
             echo "    --enable-ipv6 \\"
             echo "    --with-computed-gotos \\"
-            echo "    --without-ensurepip"
+            echo "    ac_cv_file__dev_ptmx=yes \\"
+            echo "    ac_cv_file__dev_ptc=no \\"
+            echo "    --without-ensurepip \\"
+            echo "    ac_cv_little_endian_double=yes \\"
+            echo "    --exec-prefix=/usr/local"
         fi
     } >$CONFIGURE_WRAPPER
     fail_panic "Can't create configure wrapper"
@@ -391,6 +395,8 @@ build_python_for_abi ()
         echo "LOCAL_MODULE := $PYTHON_CORE_MODULE_NAME"
         echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
         echo 'LOCAL_C_INCLUDES := $(MY_PYTHON_SRC_ROOT)/Include'
+        echo 'LOCAL_C_INCLUDES += $(MY_PYTHON_SRC_ROOT)/Include/internal'
+        echo 'LOCAL_C_INCLUDES += $(MY_PYTHON_SRC_ROOT)/Include/cpython'
         if [ "$PYTHON_MAJOR_VERSION" = "2" ]; then
             echo "LOCAL_CFLAGS := -DPy_BUILD_CORE -DPy_ENABLE_SHARED -DPLATFORM=\\\"linux\\\""
         else
@@ -410,6 +416,8 @@ build_python_for_abi ()
         run rm -Rf $PYTHON_DSTDIR/include
         run mkdir -p $PYTHON_DSTDIR/include/python && \
         run cp -p $PYTHON_BUILD_UTILS_DIR/pyconfig.h $PYTHON_SRCDIR/Include/*.h $PYTHON_DSTDIR/include/python
+        run cp -pR $PYTHON_SRCDIR/Include/internal $PYTHON_DSTDIR/include/python/internal
+        run cp -pR $PYTHON_SRCDIR/Include/cpython $PYTHON_DSTDIR/include/python/cpython
         fail_panic "Can't install python$PYTHON_ABI headers"
         PYTHON_HEADERS_INSTALLED=yes
         export PYTHON_HEADERS_INSTALLED
@@ -542,9 +550,11 @@ build_python_for_abi ()
     {
         echo 'LOCAL_PATH := $(call my-dir)'
         echo 'include $(CLEAR_VARS)'
-        echo 'LOCAL_MODULE := _ctypes'
-        echo 'LOCAL_C_INCLUDES := $(LOCAL_PATH)/include'
         echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
+        echo 'LOCAL_MODULE := _ctypes'
+        echo 'LOCAL_CFLAGS := -DPy_BUILD_CORE'
+        echo 'LOCAL_C_INCLUDES := $(LOCAL_PATH)/include'
+        echo 'LOCAL_C_INCLUDES += $(MY_PYTHON_SRC_ROOT)/Include/internal'
         echo 'LOCAL_SRC_FILES := \'
         for ffi_src in $FFI_SRC_LIST; do
             echo "  \$(MY_PYTHON_SRC_ROOT)/Modules/_ctypes/libffi/$ffi_src \\"
@@ -640,6 +650,7 @@ build_python_for_abi ()
         echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
         echo 'LOCAL_SRC_FILES := \'
         echo '  $(MY_PYTHON_SRC_ROOT)/Modules/_queuemodule.c'
+        echo 'LOCAL_C_INCLUDES := $(MY_PYTHON_SRC_ROOT)/Include/internal'
         echo 'LOCAL_STATIC_LIBRARIES := python_shared'
         echo 'include $(BUILD_SHARED_LIBRARY)'
         echo "\$(call import-module,python/$PYTHON_ABI)"
@@ -665,6 +676,8 @@ build_python_for_abi ()
         echo 'include $(CLEAR_VARS)'
         echo 'LOCAL_MODULE := _asyncio'
         echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
+        echo 'LOCAL_CFLAGS := -DPy_BUILD_CORE'
+        echo 'LOCAL_C_INCLUDES := $(MY_PYTHON_SRC_ROOT)/Include/internal'
         echo 'LOCAL_SRC_FILES := \'
         echo '  $(MY_PYTHON_SRC_ROOT)/Modules/_asynciomodule.c'
         echo 'LOCAL_STATIC_LIBRARIES := python_shared'
@@ -879,7 +892,7 @@ build_python_for_abi ()
         echo 'LOCAL_MODULE := pyexpat'
         echo 'LOCAL_CFLAGS := -DHAVE_EXPAT_CONFIG_H -DXML_STATIC'
         echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
-        echo "LOCAL_C_INCLUDES := \$(MY_PYTHON_SRC_ROOT)/Modules/expat"
+        echo 'LOCAL_C_INCLUDES := \$(MY_PYTHON_SRC_ROOT)/Modules/expat'
         echo 'LOCAL_SRC_FILES := \'
         echo '  $(MY_PYTHON_SRC_ROOT)/Modules/expat/xmlparse.c \'
         echo '  $(MY_PYTHON_SRC_ROOT)/Modules/expat/xmlrole.c \'
@@ -951,6 +964,64 @@ build_python_for_abi ()
     log "Install python$PYTHON_ABI-$ABI module 'unicodedata' in $PYBIN_INSTALLDIR_MODULES"
     run cp -p -T $OBJDIR_UNICODEDATA/libunicodedata.so $PYBIN_INSTALLDIR_MODULES/unicodedata.so
     fail_panic "Can't install python$PYTHON_ABI-$ABI module 'unicodedata' in $PYBIN_INSTALLDIR_MODULES"
+    
+# _json speedups
+    local BUILDDIR_JSON="$BUILDDIR/json"
+    local OBJDIR_JSON="$BUILDDIR_JSON/obj/local/$ABI"
+
+    run mkdir -p "$BUILDDIR_JSON/jni"
+    fail_panic "Can't create directory: $BUILDDIR_JSON/jni"
+
+    {
+        echo 'LOCAL_PATH := $(call my-dir)'
+        echo 'include $(CLEAR_VARS)'
+        echo 'LOCAL_MODULE := _json'
+        echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
+        echo 'LOCAL_C_INCLUDES := $(MY_PYTHON_SRC_ROOT)/Include/internal'
+        echo 'LOCAL_SRC_FILES := \'
+        echo '  $(MY_PYTHON_SRC_ROOT)/Modules/_json.c'
+        echo 'LOCAL_STATIC_LIBRARIES := python_shared'
+        echo 'LOCAL_CFLAGS := -DPy_BUILD_CORE_MODULE'
+        echo 'include $(BUILD_SHARED_LIBRARY)'
+        echo "\$(call import-module,python/$PYTHON_ABI)"
+    } >$BUILDDIR_JSON/jni/Android.mk
+    fail_panic "Can't generate $BUILDDIR_JSON/jni/Android.mk"
+
+    run $NDK_DIR/ndk-build -C $BUILDDIR_JSON -j$NUM_JOBS APP_ABI=$ABI V=1
+    fail_panic "Can't build python$PYTHON_ABI-$ABI module '_json'"
+
+    log "Install python$PYTHON_ABI-$ABI module '_json' in $PYBIN_INSTALLDIR_MODULES"
+    run cp -p -T $OBJDIR_JSON/lib_json.so $PYBIN_INSTALLDIR_MODULES/_json.so
+    fail_panic "Can't install python$PYTHON_ABI-$ABI module '_json' in $PYBIN_INSTALLDIR_MODULES"
+    
+# _pickle accelerator
+    local BUILDDIR_PICKLE="$BUILDDIR/pickle"
+    local OBJDIR_PICKLE="$BUILDDIR_PICKLE/obj/local/$ABI"
+
+    run mkdir -p "$BUILDDIR_PICKLE/jni"
+    fail_panic "Can't create directory: $BUILDDIR_PICKLE/jni"
+
+    {
+        echo 'LOCAL_PATH := $(call my-dir)'
+        echo 'include $(CLEAR_VARS)'
+        echo 'LOCAL_MODULE := _pickle'
+        echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
+        echo 'LOCAL_C_INCLUDES := $(MY_PYTHON_SRC_ROOT)/Include/internal'
+        echo 'LOCAL_SRC_FILES := \'
+        echo '  $(MY_PYTHON_SRC_ROOT)/Modules/_pickle.c'
+        echo 'LOCAL_STATIC_LIBRARIES := python_shared'
+        echo 'LOCAL_CFLAGS := -DPy_BUILD_CORE_MODULE'
+        echo 'include $(BUILD_SHARED_LIBRARY)'
+        echo "\$(call import-module,python/$PYTHON_ABI)"
+    } >$BUILDDIR_PICKLE/jni/Android.mk
+    fail_panic "Can't generate $BUILDDIR_PICKLE/jni/Android.mk"
+
+    run $NDK_DIR/ndk-build -C $BUILDDIR_PICKLE -j$NUM_JOBS APP_ABI=$ABI V=1
+    fail_panic "Can't build python$PYTHON_ABI-$ABI module '_pickle'"
+
+    log "Install python$PYTHON_ABI-$ABI module '_pickle' in $PYBIN_INSTALLDIR_MODULES"
+    run cp -p -T $OBJDIR_PICKLE/lib_pickle.so $PYBIN_INSTALLDIR_MODULES/_pickle.so
+    fail_panic "Can't install python$PYTHON_ABI-$ABI module '_pickle' in $PYBIN_INSTALLDIR_MODULES"
 }
 
 if [ -n "$PACKAGE_DIR" ]; then

@@ -170,7 +170,28 @@ class Python3Recipe(TargetPythonRecipe):
     def prebuild_arch(self, arch):
         super(Python3Recipe, self).prebuild_arch(arch)
         if self.version == '3.6' or self.version == '3.7' or self.version == '3.9':
-            Python3Recipe.patches = ['patch_python3.6.patch', 'remove_android_api_check.patch', 'selectors.patch']
+            Python3Recipe.patches = [
+                'patch/patch_python3.6.patch',
+                'patch/remove_android_api_check.patch',
+                'patch/selectors.patch'
+            ]
+
+            if self.version == '3.9':
+                Python3Recipe.patches = [
+                    'patch/remove_android_api_check.patch',
+                    'patch/patch_python3.9.patch',
+                    'patch/platlibdir.patch',
+                    'patch/strdup.patch',
+                    
+                    # from https://github.com/kivy/python-for-android/blob/develop/pythonforandroid/recipes/python3/__init__.py#L63
+                    'patch/pyconfig_detection.patch',
+                    'patch/reproducible-buildinfo.diff',
+                    'patch/py3.8.1.patch'
+                ]
+
+                if sh.which('lld') is not None:
+                    Python3Recipe.patches += ['patch/py3.8.1_fix_cortex_a8.patch']
+                    
             build_dir = self.get_build_dir(arch.arch)
 
             # copy bundled libffi to _ctypes

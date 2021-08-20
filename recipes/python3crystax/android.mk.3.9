@@ -27,14 +27,17 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Python/getversion.c \
   $(MY_PYTHON_SRC_ROOT)/Python/graminit.c \
   $(MY_PYTHON_SRC_ROOT)/Python/hamt.c \
+  $(MY_PYTHON_SRC_ROOT)/Python/hashtable.c \
   $(MY_PYTHON_SRC_ROOT)/Python/import.c \
   $(MY_PYTHON_SRC_ROOT)/Python/importdl.c \
+  $(MY_PYTHON_SRC_ROOT)/Python/initconfig.c \
   $(MY_PYTHON_SRC_ROOT)/Python/marshal.c \
   $(MY_PYTHON_SRC_ROOT)/Python/modsupport.c \
   $(MY_PYTHON_SRC_ROOT)/Python/mysnprintf.c \
   $(MY_PYTHON_SRC_ROOT)/Python/mystrtoul.c \
   $(MY_PYTHON_SRC_ROOT)/Python/pathconfig.c \
   $(MY_PYTHON_SRC_ROOT)/Python/peephole.c \
+  $(MY_PYTHON_SRC_ROOT)/Python/preconfig.c \
   $(MY_PYTHON_SRC_ROOT)/Python/pyarena.c \
   $(MY_PYTHON_SRC_ROOT)/Python/pyctype.c \
   $(MY_PYTHON_SRC_ROOT)/Python/pyfpe.c \
@@ -57,17 +60,18 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Python/_warnings.c \
   \
   $(MY_PYTHON_SRC_ROOT)/Parser/acceler.c \
-  $(MY_PYTHON_SRC_ROOT)/Parser/bitset.c \
-  $(MY_PYTHON_SRC_ROOT)/Parser/firstsets.c \
-  $(MY_PYTHON_SRC_ROOT)/Parser/grammar.c \
   $(MY_PYTHON_SRC_ROOT)/Parser/grammar1.c \
   $(MY_PYTHON_SRC_ROOT)/Parser/listnode.c \
-  $(MY_PYTHON_SRC_ROOT)/Parser/metagrammar.c \
   $(MY_PYTHON_SRC_ROOT)/Parser/myreadline.c \
   $(MY_PYTHON_SRC_ROOT)/Parser/node.c \
   $(MY_PYTHON_SRC_ROOT)/Parser/parser.c \
   $(MY_PYTHON_SRC_ROOT)/Parser/parsetok.c \
+  $(MY_PYTHON_SRC_ROOT)/Parser/token.c \
   $(MY_PYTHON_SRC_ROOT)/Parser/tokenizer.c \
+  $(MY_PYTHON_SRC_ROOT)/Parser/pegen/parse.c \
+  $(MY_PYTHON_SRC_ROOT)/Parser/pegen/parse_string.c \
+  $(MY_PYTHON_SRC_ROOT)/Parser/pegen/peg_api.c \
+  $(MY_PYTHON_SRC_ROOT)/Parser/pegen/pegen.c \
   \
   $(MY_PYTHON_SRC_ROOT)/Objects/abstract.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/accu.c \
@@ -90,6 +94,8 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/frameobject.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/funcobject.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/genobject.c \
+  $(MY_PYTHON_SRC_ROOT)/Objects/genericaliasobject.c \
+  $(MY_PYTHON_SRC_ROOT)/Objects/interpreteridobject.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/iterobject.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/listobject.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/longobject.c \
@@ -100,6 +106,7 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/object.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/obmalloc.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/odictobject.c \
+  $(MY_PYTHON_SRC_ROOT)/Objects/picklebufobject.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/rangeobject.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/setobject.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/sliceobject.c \
@@ -131,10 +138,8 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/gcmodule.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/getbuildinfo.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/getpath.c \
-  $(MY_PYTHON_SRC_ROOT)/Modules/hashtable.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/_heapqmodule.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/itertoolsmodule.c \
-  $(MY_PYTHON_SRC_ROOT)/Modules/_json.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/_localemodule.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/_lsprof.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/main.c \
@@ -146,7 +151,6 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/_operator.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/ossaudiodev.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/parsermodule.c \
-  $(MY_PYTHON_SRC_ROOT)/Modules/_pickle.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/posixmodule.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/_posixsubprocess.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/pwdmodule.c \
@@ -176,7 +180,6 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/xxlimited.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/xxmodule.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/xxsubtype.c \
-  $(MY_PYTHON_SRC_ROOT)/Modules/zipimport.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/zlibmodule.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/cjkcodecs/_codecs_cn.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/cjkcodecs/_codecs_hk.c \
