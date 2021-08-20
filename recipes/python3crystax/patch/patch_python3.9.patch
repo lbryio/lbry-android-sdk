@@ -18,7 +18,7 @@ diff --git a/Modules/getpath.c b/Modules/getpath.c
  
 +/*
 +    These variables were set this way in older versions of Python, but
-+    changed from 3.5.1 and 3.5.2.
++    changed from 3.5.1 to 3.5.2.
 +    https://github.com/python/cpython/commit/f5854148138280c69fdc9d350636dc2140d57753
 +    Here we just  the old way again. A better solution would be to work
 +    out where they should be defined, and make the CrystaX build scripts do so.
