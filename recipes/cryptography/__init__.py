@@ -6,7 +6,7 @@ class CryptographyRecipe(CompiledComponentsPythonRecipe):
     name = 'cryptography'
     version = '3.1.1'
     url = 'https://github.com/pyca/cryptography/archive/{version}.tar.gz'
-    depends = [('python2', 'python3crystax'), 'openssl', 'idna', 'pyasn1', 'six', 'setuptools', 'ipaddress', 'cffi']
+    depends = [('python2', 'python3crystax'), 'openssl', 'six', 'setuptools', 'cffi']
     call_hostpython_via_targetpython = False
     patches = ['libpthread.patch']
 
