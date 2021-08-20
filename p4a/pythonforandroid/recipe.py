@@ -658,8 +658,8 @@ class BootstrapNDKRecipe(Recipe):
         env['PYTHON_LINK_ROOT'] = self.ctx.python_recipe.link_root(arch.arch)
         env['EXTRA_LDLIBS'] = ' -lpython{}'.format(
             self.ctx.python_recipe.major_minor_version_string)
-        if 'python3' in self.ctx.python_recipe.name:
-            env['EXTRA_LDLIBS'] += 'm'
+        #if 'python3' in self.ctx.python_recipe.name:
+        #    env['EXTRA_LDLIBS'] += 'm'
         return env
 
 
@@ -803,7 +803,7 @@ class PythonRecipe(Recipe):
                          'python'))
                 env['LDFLAGS'] += ' -L{}'.format(
                     join(ndk_dir_python, 'libs', arch.arch))
-                env['LDFLAGS'] += ' -lpython{}m'.format(python_short_version)
+                env['LDFLAGS'] += ' -lpython{}'.format(python_short_version)
 
             hppath = []
             hppath.append(join(dirname(self.hostpython_location), 'Lib'))

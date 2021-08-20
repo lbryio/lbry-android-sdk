@@ -386,8 +386,8 @@ build_python_for_abi ()
     if [ "$PYTHON_MAJOR_VERSION" = "2" ]; then
         local PYTHON_CORE_MODULE_NAME='python'"$PYTHON_ABI"
     else
-        local PYTHON_CORE_MODULE_NAME='python'"$PYTHON_ABI"'m'
-        local PYTHON_SOABI='cpython-'"$PYTHON_ABI"'m'
+        local PYTHON_CORE_MODULE_NAME='python'"$PYTHON_ABI"
+        local PYTHON_SOABI='cpython-'"$PYTHON_ABI"
     fi
     {
         echo 'LOCAL_PATH := $(call my-dir)'

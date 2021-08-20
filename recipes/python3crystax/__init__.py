@@ -212,7 +212,11 @@ class Python3Recipe(TargetPythonRecipe):
                 os.mkdir(join(ndk_sources_python_dir, '3.9'))
             sh.sed('s#3.5#3.9#',
                    join(ndk_sources_python_dir, '3.5/Android.mk'),
+                   _out=join(ndk_sources_python_dir, '3.9/Android.mk.tmp'))
+            sh.sed('s#3.9m#3.9#',
+                   join(ndk_sources_python_dir, '3.9/Android.mk.tmp'),
                    _out=join(ndk_sources_python_dir, '3.9/Android.mk'))
+            shprint(sh.rm, '-f', join(ndk_sources_python_dir, '3.9/Android.mk.tmp'))
 
     def build_arch(self, arch):
        # If openssl is needed we may have to recompile cPython to get the
