@@ -17,7 +17,8 @@ public class PythonUtil {
             "python2.7",
             "python3.5m",
             "python3.6m",
-			"python3.7m",
+            "python3.7m",
+            "python3.9m",
             "main"
         };
     }
@@ -37,7 +38,7 @@ public class PythonUtil {
                 // If this is the last possible libpython
                 // load, and it has failed, give a more
                 // general error
-                if (lib.startsWith("python3.7") && !foundPython) {
+                if (lib.startsWith("python3.9") && !foundPython) {
                     throw new java.lang.RuntimeException("Could not load any libpythonXXX.so");
                 }
                 continue;
