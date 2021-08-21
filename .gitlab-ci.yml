@@ -25,7 +25,7 @@ build arm64 aar:
     - rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
     - mv buildozer.spec.arm64.ci buildozer.spec
     - chmod u+x ./build-release.sh
-    - "./build-release.sh
+    - ./build-release.sh
     - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release__arm64.aar
     - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar /dev/null
 
@@ -51,7 +51,7 @@ build arm aar:
     - rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
     - mv buildozer.spec.arm.ci buildozer.spec
     - chmod u+x ./build-release.sh
-    - "./build-release.sh
+    - ./build-release.sh
     - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release__arm.aar
     - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar /dev/null
 
