@@ -72,7 +72,7 @@ class Python3Recipe(TargetPythonRecipe):
     from_crystax = True
 
     def download_if_necessary(self):
-        if 'openssl' in self.ctx.recipe_build_order or self.version == '3.6' or self.version == '3.7' or self.version == '3.9':
+        if 'openssl' in self.ctx.recipe_build_order or self.version in ('3.6', '3.7', '3.9'):
             full_version = LATEST_FULL_VERSION[self.version]
             Python3Recipe.url = 'https://www.python.org/ftp/python/{0}.{1}.{2}/Python-{0}.{1}.{2}.tgz'.format(*full_version.split('.'))
             super(Python3Recipe, self).download_if_necessary()
@@ -169,14 +169,14 @@ class Python3Recipe(TargetPythonRecipe):
 
     def prebuild_arch(self, arch):
         super(Python3Recipe, self).prebuild_arch(arch)
-        if self.version == '3.6' or self.version == '3.7' or self.version == '3.9':
+        if self.version in ('3.6', '3.7', '3.9'):
             Python3Recipe.patches = [
                 'patch/patch_python3.6.patch',
                 'patch/remove_android_api_check.patch',
                 'patch/selectors.patch'
             ]
 
-            if self.version == '3.9':
+            if self.version in ('3.9'):
                 Python3Recipe.patches = [
                     'patch/remove_android_api_check.patch',
                     'patch/patch_python3.9.patch',
@@ -205,18 +205,18 @@ class Python3Recipe(TargetPythonRecipe):
             python_build_files = ['android.mk', 'config.c', 'interpreter.c']
             ndk_build_tools_python_dir = join(self.ctx.ndk_dir, 'build', 'tools', 'build-target-python')
             for python_build_file in python_build_files:
-                shprint(sh.cp, join(self.get_recipe_dir(), python_build_file+'.3.9'),
-                               join(ndk_build_tools_python_dir, python_build_file+'.3.9'))
+                shprint(sh.cp, join(self.get_recipe_dir(), '{}.{}'.format(python_build_file, self.version)),
+                               join(ndk_build_tools_python_dir, '{}.{}'.format(python_build_file, self.version)))
             ndk_sources_python_dir = join(self.ctx.ndk_dir, 'sources', 'python')
-            if not os.path.exists(join(ndk_sources_python_dir, '3.9')):
-                os.mkdir(join(ndk_sources_python_dir, '3.9'))
-            sh.sed('s#3.5#3.9#',
+            if not os.path.exists(join(ndk_sources_python_dir, self.version)):
+                os.mkdir(join(ndk_sources_python_dir, self.version))
+            sh.sed('s#3.5#{}#'.format(self.version),
                    join(ndk_sources_python_dir, '3.5/Android.mk'),
-                   _out=join(ndk_sources_python_dir, '3.9/Android.mk.tmp'))
-            sh.sed('s#3.9m#3.9#',
-                   join(ndk_sources_python_dir, '3.9/Android.mk.tmp'),
-                   _out=join(ndk_sources_python_dir, '3.9/Android.mk'))
-            shprint(sh.rm, '-f', join(ndk_sources_python_dir, '3.9/Android.mk.tmp'))
+                   _out=join(ndk_sources_python_dir, '{}/Android.mk.tmp'.format(self.version)))
+            sh.sed('s#{}m#{}#'.format(self.version, self.version),
+                   join(ndk_sources_python_dir, '{}/Android.mk.tmp'.format(self.version)),
+                   _out=join(ndk_sources_python_dir, '{}/Android.mk'.format(self.version)))
+            shprint(sh.rm, '-f', join(ndk_sources_python_dir, '{}/Android.mk.tmp'.format(self.version)))
 
     def build_arch(self, arch):
        # If openssl is needed we may have to recompile cPython to get the
