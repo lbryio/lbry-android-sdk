@@ -1,21 +1,21 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 RUN export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 RUN dpkg --add-architecture i386
 RUN apt-get -y update && apt-get -y install curl ca-certificates software-properties-common gpg-agent wget
 RUN add-apt-repository ppa:deadsnakes/ppa -y
-RUN apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf autogen automake libtool libffi-dev \
-    build-essential python3.9 python3.9-dev python3.9-venv python3-pip ccache git libncurses5:i386 libstdc++6:i386 \
-    libgtk2.0-0:i386 libpangox-1.0-0:i386 libpangoxft-1.0-0:i386 libidn11:i386 python2.7 python2.7-dev \
-    python-pip openjdk-8-jdk unzip zlib1g-dev zlib1g:i386 m4 libc6-dev-i386 gawk
+RUN apt-get -y update && DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf autogen automake \
+    libtool libffi-dev build-essential python3.9 python3.9-dev python3.9-venv ccache git \
+    libncurses5:i386 libstdc++6:i386 libgtk2.0-0:i386 libpangox-1.0-0:i386 libpangoxft-1.0-0:i386 \
+    libidn11:i386 openjdk-8-jdk unzip zlib1g-dev zlib1g:i386 m4 libc6-dev-i386 gawk
 
 RUN rm /usr/bin/python3 && ln -s /usr/bin/python3.9 /usr/bin/python3
-RUN rm /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python
-
-RUN pip install --upgrade cython==0.29.15 setuptools zipp==1.2.0 importlib-resources==1.0.2 importlib-metadata==0.20 virtualenv==20.4.7 appdirs sh colorama==0.3.3 jinja2 six pep517\<0.7.0 toml
+RUN rm -f /usr/bin/python && ln -s /usr/bin/python3.9 /usr/bin/python
+RUN wget https://bootstrap.pypa.io/pip/get-pip.py && python3 get-pip.py
+RUN pip install --upgrade cython==0.29.24 setuptools zipp importlib-resources importlib-metadata virtualenv appdirs sh colorama\>=0.3.3 jinja2 six pep517\<0.7.0 toml
 
 RUN git clone https://github.com/lbryio/buildozer.git
-RUN cd buildozer && python2 setup.py install && cd ..
+RUN cd buildozer && python setup.py install && cd ..
 
 RUN mkdir -p cd ~/.buildozer/android/platform/
 
@@ -23,19 +23,17 @@ RUN wget 'https://dl.google.com/android/android-sdk_r23-linux.tgz' -P ~/.buildoz
     wget 'https://dl.google.com/android/repository/platform-28_r06.zip' -P ~/.buildozer/android/platform/ && \
     wget 'https://dl.google.com/android/repository/build-tools_r28.0.3-linux.zip' -P ~/.buildozer/android/platform/ && \
     tar -xvf ~/.buildozer/android/platform/android-sdk_r23-linux.tgz -C ~/.buildozer/android/platform/ && \
-    mv ~/.buildozer/android/platform/android-sdk-linux ~/.buildozer/android/platform/android-sdk-23 && \
-    unzip ~/.buildozer/android/platform/platform-28_r06.zip -d ~/.buildozer/android/platform/android-sdk-23/platforms && \
-    mv ~/.buildozer/android/platform/android-sdk-23/platforms/android-9 ~/.buildozer/android/platform/android-sdk-23/platforms/android-28 && \
-    mkdir -p ~/.buildozer/android/platform/android-sdk-23/build-tools && \
-    unzip ~/.buildozer/android/platform/build-tools_r28.0.3-linux.zip -d ~/.buildozer/android/platform/android-sdk-23/build-tools && \
-    mv ~/.buildozer/android/platform/android-sdk-23/build-tools/android-9 ~/.buildozer/android/platform/android-sdk-23/build-tools/28.0.3 && \
+    mv ~/.buildozer/android/platform/android-sdk-linux ~/.buildozer/android/platform/android-sdk && \
+    unzip ~/.buildozer/android/platform/platform-28_r06.zip -d ~/.buildozer/android/platform/android-sdk/platforms && \
+    mv ~/.buildozer/android/platform/android-sdk/platforms/android-9 ~/.buildozer/android/platform/android-sdk/platforms/android-28 && \
+    mkdir -p ~/.buildozer/android/platform/android-sdk/build-tools && \
+    unzip ~/.buildozer/android/platform/build-tools_r28.0.3-linux.zip -d ~/.buildozer/android/platform/android-sdk/build-tools && \
+    mv ~/.buildozer/android/platform/android-sdk/build-tools/android-9 ~/.buildozer/android/platform/android-sdk/build-tools/28.0.3 && \
     rm ~/.buildozer/android/platform/android-sdk_r23-linux.tgz && \
     rm ~/.buildozer/android/platform/platform-28_r06.zip && \
     rm ~/.buildozer/android/platform/build-tools_r28.0.3-linux.zip
 
-RUN mkdir -p ~/.buildozer/android/platform/android-sdk-23/licenses && \
-    echo $'\n8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee' > ~/.buildozer/android/platform/android-sdk-23/licenses/android-sdk-license
-
-RUN pip3 install --upgrade setuptools==51.0.0
+RUN mkdir -p ~/.buildozer/android/platform/android-sdk/licenses && \
+    echo $'\n8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee' > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
 
 CMD ["/bin/bash"]
