@@ -34,7 +34,8 @@ LATEST_FULL_VERSION = {
     '3.5': '3.5.1',
     '3.6': '3.6.6',
     '3.7': '3.7.1',
-    '3.9': '3.9.6'
+    '3.9': '3.9.6',
+    '3.10': '3.10.0'
 }
 
 def realpath(fname):
@@ -62,7 +63,7 @@ def realpath(fname):
     return os.sep.join(abs_path)
 
 class Python3Recipe(TargetPythonRecipe):
-    version = '3.9'
+    version = '3.10'
     url = ''
     name = 'python3crystax'
 
@@ -72,9 +73,12 @@ class Python3Recipe(TargetPythonRecipe):
     from_crystax = True
 
     def download_if_necessary(self):
-        if 'openssl' in self.ctx.recipe_build_order or self.version in ('3.6', '3.7', '3.9'):
+        if 'openssl' in self.ctx.recipe_build_order or self.version in ('3.6', '3.7', '3.9', '3.10'):
             full_version = LATEST_FULL_VERSION[self.version]
-            Python3Recipe.url = 'https://www.python.org/ftp/python/{0}.{1}.{2}/Python-{0}.{1}.{2}.tgz'.format(*full_version.split('.'))
+            version_suffix = 'rc1'
+            version_params = full_version.split('.')
+            version_params.append(version_suffix)
+            Python3Recipe.url = 'https://www.python.org/ftp/python/{0}.{1}.{2}/Python-{0}.{1}.{2}{3}.tgz'.format(*version_params)
             super(Python3Recipe, self).download_if_necessary()
 
     def get_dir_name(self):
@@ -169,29 +173,39 @@ class Python3Recipe(TargetPythonRecipe):
 
     def prebuild_arch(self, arch):
         super(Python3Recipe, self).prebuild_arch(arch)
-        if self.version in ('3.6', '3.7', '3.9'):
-            Python3Recipe.patches = [
-                'patch/patch_python3.6.patch',
-                'patch/remove_android_api_check.patch',
-                'patch/selectors.patch'
-            ]
-
-            if self.version in ('3.9'):
-                Python3Recipe.patches = [
-                    'patch/remove_android_api_check.patch',
-                    'patch/patch_python3.9.patch',
-                    'patch/platlibdir.patch',
-                    'patch/strdup.patch',
+        if self.version in ('3.6', '3.7', '3.9', '3.10'):
+            patches = ['remove_android_api_check{}'.format('_3.10' if self.version == '3.10' else '')]
+            if self.version in ('3.6', '3.7'):
+                patches += [
+                    'patch_python3.6',
+                    'selectors'
+                ]
+                
+            if self.version in ('3.9', '3.10'):
+                if self.version == '3.9':
+                    patches += ['strdup']
+                    
+                if self.version == '3.10':
+                    patches += ['py3.10.0_posixmodule']
+                
+                patches += [
+                    'patch_python3.9',
+                    'platlibdir',
                     
                     # from https://github.com/kivy/python-for-android/blob/develop/pythonforandroid/recipes/python3/__init__.py#L63
-                    'patch/pyconfig_detection.patch',
-                    'patch/reproducible-buildinfo.diff',
-                    'patch/py3.8.1.patch'
+                    'pyconfig_detection',
+                    'reproducible-buildinfo',
+                    'py3.8.1'
                 ]
 
                 if sh.which('lld') is not None:
-                    Python3Recipe.patches += ['patch/py3.8.1_fix_cortex_a8.patch']
-                    
+                    patches += ['py3.8.1_fix_cortex_a8']
+            
+            
+            Python3Recipe.patches = []
+            for patch_name in patches:
+                Python3Recipe.patches.append('patch/{}.patch'.format(patch_name))
+
             build_dir = self.get_build_dir(arch.arch)
 
             # copy bundled libffi to _ctypes

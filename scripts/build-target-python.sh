@@ -648,6 +648,7 @@ build_python_for_abi ()
         echo 'include $(CLEAR_VARS)'
         echo 'LOCAL_MODULE := _queue'
         echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
+        echo 'LOCAL_CFLAGS := -DPy_BUILD_CORE'
         echo 'LOCAL_SRC_FILES := \'
         echo '  $(MY_PYTHON_SRC_ROOT)/Modules/_queuemodule.c'
         echo 'LOCAL_C_INCLUDES := $(MY_PYTHON_SRC_ROOT)/Include/internal'
@@ -950,6 +951,7 @@ build_python_for_abi ()
         echo 'include $(CLEAR_VARS)'
         echo 'LOCAL_MODULE := unicodedata'
         echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
+        echo 'LOCAL_C_INCLUDES := $(MY_PYTHON_SRC_ROOT)/Include/internal'
         echo 'LOCAL_SRC_FILES := \'
         echo '  $(MY_PYTHON_SRC_ROOT)/Modules/unicodedata.c'
         echo 'LOCAL_STATIC_LIBRARIES := python_shared'

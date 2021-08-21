@@ -1,0 +1,12 @@
+--- a/Modules/posixmodule.c	2021-08-02 20:53:59.000000000 +0100
++++ b/Modules/posixmodule.c	2021-08-21 12:06:16.897465398 +0100
+@@ -15384,6 +15384,9 @@
+ #ifdef HAVE_EVENTFD
+     if (PyModule_AddIntMacro(m, EFD_CLOEXEC)) return -1;
+     if (PyModule_AddIntMacro(m, EFD_NONBLOCK)) return -1;
++#  ifndef EFD_SEMAPHORE
++#    define EFD_SEMAPHORE (1 << 0)
++#  endif
+     if (PyModule_AddIntMacro(m, EFD_SEMAPHORE)) return -1;
+ #endif
+ 

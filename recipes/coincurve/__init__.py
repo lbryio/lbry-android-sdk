@@ -21,7 +21,7 @@ class CoincurveRecipe(CompiledComponentsPythonRecipe):
         env['LDFLAGS'] += ' -L{}'.format(os.path.join(libsecp256k1_dir, '.libs'))
         env['CFLAGS'] += ' -I' + os.path.join(libsecp256k1_dir, 'include')
         # only keeps major.minor (discards patch)
-        python_version = self.ctx.python_recipe.version[0:3]
+        python_version = self.ctx.python_recipe.version
         # required additional library and path for Crystax
         if self.ctx.ndk == 'crystax':
             ndk_dir_python = os.path.join(self.ctx.ndk_dir, 'sources/python/', python_version)

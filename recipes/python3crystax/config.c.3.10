@@ -35,7 +35,6 @@ extern PyObject* PyInit__symtable(void);
 extern PyObject* PyInit_mmap(void);
 extern PyObject* PyInit__csv(void);
 extern PyObject* PyInit__sre(void);
-extern PyObject* PyInit_parser(void);
 extern PyObject* PyInit__struct(void);
 extern PyObject* PyInit__datetime(void);
 extern PyObject* PyInit__functools(void);
@@ -96,7 +95,6 @@ struct _inittab _PyImport_Inittab[] = {
     {"mmap", PyInit_mmap},
     {"_csv", PyInit__csv},
     {"_sre", PyInit__sre},
-    {"parser", PyInit_parser},
     {"_struct", PyInit__struct},
     {"_datetime", PyInit__datetime},
     {"_functools", PyInit__functools},

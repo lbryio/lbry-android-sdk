@@ -25,7 +25,6 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Python/getopt.c \
   $(MY_PYTHON_SRC_ROOT)/Python/getplatform.c \
   $(MY_PYTHON_SRC_ROOT)/Python/getversion.c \
-  $(MY_PYTHON_SRC_ROOT)/Python/graminit.c \
   $(MY_PYTHON_SRC_ROOT)/Python/hamt.c \
   $(MY_PYTHON_SRC_ROOT)/Python/hashtable.c \
   $(MY_PYTHON_SRC_ROOT)/Python/import.c \
@@ -36,7 +35,6 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Python/mysnprintf.c \
   $(MY_PYTHON_SRC_ROOT)/Python/mystrtoul.c \
   $(MY_PYTHON_SRC_ROOT)/Python/pathconfig.c \
-  $(MY_PYTHON_SRC_ROOT)/Python/peephole.c \
   $(MY_PYTHON_SRC_ROOT)/Python/preconfig.c \
   $(MY_PYTHON_SRC_ROOT)/Python/pyarena.c \
   $(MY_PYTHON_SRC_ROOT)/Python/pyctype.c \
@@ -51,27 +49,21 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Python/Python-ast.c \
   $(MY_PYTHON_SRC_ROOT)/Python/pythonrun.c \
   $(MY_PYTHON_SRC_ROOT)/Python/pytime.c \
-  $(MY_PYTHON_SRC_ROOT)/Python/strdup.c \
   $(MY_PYTHON_SRC_ROOT)/Python/structmember.c \
+  $(MY_PYTHON_SRC_ROOT)/Python/suggestions.c \
   $(MY_PYTHON_SRC_ROOT)/Python/symtable.c \
   $(MY_PYTHON_SRC_ROOT)/Python/sysmodule.c \
   $(MY_PYTHON_SRC_ROOT)/Python/thread.c \
   $(MY_PYTHON_SRC_ROOT)/Python/traceback.c \
   $(MY_PYTHON_SRC_ROOT)/Python/_warnings.c \
   \
-  $(MY_PYTHON_SRC_ROOT)/Parser/acceler.c \
-  $(MY_PYTHON_SRC_ROOT)/Parser/grammar1.c \
-  $(MY_PYTHON_SRC_ROOT)/Parser/listnode.c \
   $(MY_PYTHON_SRC_ROOT)/Parser/myreadline.c \
-  $(MY_PYTHON_SRC_ROOT)/Parser/node.c \
   $(MY_PYTHON_SRC_ROOT)/Parser/parser.c \
-  $(MY_PYTHON_SRC_ROOT)/Parser/parsetok.c \
+  $(MY_PYTHON_SRC_ROOT)/Parser/peg_api.c \
+  $(MY_PYTHON_SRC_ROOT)/Parser/pegen.c \
+  $(MY_PYTHON_SRC_ROOT)/Parser/string_parser.c \
   $(MY_PYTHON_SRC_ROOT)/Parser/token.c \
   $(MY_PYTHON_SRC_ROOT)/Parser/tokenizer.c \
-  $(MY_PYTHON_SRC_ROOT)/Parser/pegen/parse.c \
-  $(MY_PYTHON_SRC_ROOT)/Parser/pegen/parse_string.c \
-  $(MY_PYTHON_SRC_ROOT)/Parser/pegen/peg_api.c \
-  $(MY_PYTHON_SRC_ROOT)/Parser/pegen/pegen.c \
   \
   $(MY_PYTHON_SRC_ROOT)/Objects/abstract.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/accu.c \
@@ -115,6 +107,7 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/typeobject.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/unicodectype.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/unicodeobject.c \
+  $(MY_PYTHON_SRC_ROOT)/Objects/unionobject.c \
   $(MY_PYTHON_SRC_ROOT)/Objects/weakrefobject.c \
   \
   $(MY_PYTHON_SRC_ROOT)/Modules/_abc.c \
@@ -150,7 +143,6 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/_opcode.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/_operator.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/ossaudiodev.c \
-  $(MY_PYTHON_SRC_ROOT)/Modules/parsermodule.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/posixmodule.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/_posixsubprocess.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/pwdmodule.c \
@@ -178,6 +170,7 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/unicodedata.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/_weakref.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/xxlimited.c \
+  $(MY_PYTHON_SRC_ROOT)/Modules/xxlimited_35.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/xxmodule.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/xxsubtype.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/zlibmodule.c \

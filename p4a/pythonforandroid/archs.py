@@ -83,7 +83,7 @@ class Arch(object):
         env['CFLAGS'] += ' -isysroot {} '.format(sysroot)
         env['CFLAGS'] += '-I' + join(self.ctx.get_python_install_dir(),
                                      'include/python{}'.format(
-                                         self.ctx.python_recipe.version[0:3])
+                                         self.ctx.python_recipe.version)
                                     )
 
         env['LDFLAGS'] += '--sysroot={} '.format(self.ctx.ndk_platform)
@@ -157,7 +157,7 @@ class Arch(object):
         if self.ctx.python_recipe and self.ctx.python_recipe.from_crystax:
             # For crystax python, we can't use the host python headers:
             env["CFLAGS"] += ' -I{}/sources/python/{}/include/python/'.\
-                format(self.ctx.ndk_dir, self.ctx.python_recipe.version[0:3])
+                format(self.ctx.ndk_dir, self.ctx.python_recipe.version)
         env['STRIP'] = '{}-strip --strip-unneeded'.format(command_prefix)
         env['MAKE'] = 'make -j5'
         env['READELF'] = '{}-readelf'.format(command_prefix)

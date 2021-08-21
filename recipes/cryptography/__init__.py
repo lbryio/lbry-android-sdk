@@ -23,7 +23,7 @@ class CryptographyRecipe(CompiledComponentsPythonRecipe):
 
         if self.ctx.ndk == 'crystax':
             # only keeps major.minor (discards patch)
-            python_version = self.ctx.python_recipe.version[0:3]
+            python_version = self.ctx.python_recipe.version
             ndk_dir_python = os.path.join(self.ctx.ndk_dir, 'sources/python/', python_version)
             env['LDFLAGS'] += ' -L{}'.format(os.path.join(ndk_dir_python, 'libs', arch.arch))
             env['LDFLAGS'] += ' -lpython{}'.format(python_version)
