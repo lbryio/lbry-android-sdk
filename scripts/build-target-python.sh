@@ -950,6 +950,7 @@ build_python_for_abi ()
         echo 'LOCAL_PATH := $(call my-dir)'
         echo 'include $(CLEAR_VARS)'
         echo 'LOCAL_MODULE := unicodedata'
+        echo 'LOCAL_CFLAGS := -DPy_BUILD_CORE'
         echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
         echo 'LOCAL_C_INCLUDES := $(MY_PYTHON_SRC_ROOT)/Include/internal'
         echo 'LOCAL_SRC_FILES := \'
