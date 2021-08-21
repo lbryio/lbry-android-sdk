@@ -749,8 +749,9 @@ class PythonRecipe(Recipe):
         host_build = Recipe.get_recipe(host_name, self.ctx).get_build_dir()
         if host_name in ['hostpython2', 'hostpython3']:
             return join(host_build, 'native-build', 'python')
-        elif host_name in ['hostpython3crystax', 'hostpython2legacy']:
-            return join(host_build, 'hostpython')
+        elif host_name in ['hostpython3crystax']:
+            python_recipe = Recipe.get_recipe(host_name, self.ctx)
+            return python_recipe.python_exe
         else:
             python_recipe = self.ctx.python_recipe
             return 'python{}'.format(python_recipe.version)

@@ -42,5 +42,9 @@ class Hostpython3Recipe(Recipe):
         link_dest = join(self.get_build_dir(), 'hostpython')
         shprint(sh.ln, '-sf', system_python, link_dest)
 
+    @property
+    def python_exe(self):
+        return join(self.get_build_dir(), 'hostpython')
+
 
 recipe = Hostpython3Recipe()
