@@ -22,16 +22,23 @@ RUN mkdir -p cd ~/.buildozer/android/platform/
 RUN wget 'https://dl.google.com/android/android-sdk_r23-linux.tgz' -P ~/.buildozer/android/platform/ && \
     wget 'https://dl.google.com/android/repository/platform-28_r06.zip' -P ~/.buildozer/android/platform/ && \
     wget 'https://dl.google.com/android/repository/build-tools_r28.0.3-linux.zip' -P ~/.buildozer/android/platform/ && \
-    tar -xvf ~/.buildozer/android/platform/android-sdk_r23-linux.tgz -C ~/.buildozer/android/platform/ && \
+    wget 'https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip' -P ~/.buildozer/android/platform
+
+RUN tar -xvf ~/.buildozer/android/platform/android-sdk_r23-linux.tgz -C ~/.buildozer/android/platform/ && \
     mv ~/.buildozer/android/platform/android-sdk-linux ~/.buildozer/android/platform/android-sdk && \
     unzip ~/.buildozer/android/platform/platform-28_r06.zip -d ~/.buildozer/android/platform/android-sdk/platforms && \
     mv ~/.buildozer/android/platform/android-sdk/platforms/android-9 ~/.buildozer/android/platform/android-sdk/platforms/android-28 && \
     mkdir -p ~/.buildozer/android/platform/android-sdk/build-tools && \
     unzip ~/.buildozer/android/platform/build-tools_r28.0.3-linux.zip -d ~/.buildozer/android/platform/android-sdk/build-tools && \
     mv ~/.buildozer/android/platform/android-sdk/build-tools/android-9 ~/.buildozer/android/platform/android-sdk/build-tools/28.0.3 && \
-    rm ~/.buildozer/android/platform/android-sdk_r23-linux.tgz && \
+    unzip ~/.buildozer/android/platform/commandlinetools-linux-7583922_latest.zip -d ~/.buildozer/android/platform/android-sdk && \
+    cp -Rf ~/.buildozer/android/platform/android-sdk/cmdline-tools/* ~/.buildozer/android/platform/android-sdk/tools && \
+    rm -rf ~/.buildozer/android/platform/android-sdk/cmdline-tools
+
+RUN rm ~/.buildozer/android/platform/android-sdk_r23-linux.tgz && \
     rm ~/.buildozer/android/platform/platform-28_r06.zip && \
-    rm ~/.buildozer/android/platform/build-tools_r28.0.3-linux.zip
+    rm ~/.buildozer/android/platform/build-tools_r28.0.3-linux.zip && \
+    rm ~/.buildozer/android/platform/commandlinetools-linux-7583922_latest.zip
 
 RUN mkdir -p ~/.buildozer/android/platform/android-sdk/licenses && \
     echo $'\n8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee' > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
