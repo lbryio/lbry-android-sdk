@@ -26,6 +26,7 @@ extern PyObject* PyInit__thread(void);
 extern PyObject* PyInit__codecs(void);
 extern PyObject* PyInit__weakref(void);
 extern PyObject* PyInit_xxsubtype(void);
+extern PyObject* PyInit__xxsubinterpreters(void);
 extern PyObject* PyInit__random(void);
 extern PyObject* PyInit_itertools(void);
 extern PyObject* PyInit__collections(void);
@@ -100,6 +101,7 @@ struct _inittab _PyImport_Inittab[] = {
     {"_functools", PyInit__functools},
 
     {"xxsubtype", PyInit_xxsubtype},
+    {"_xxsubinterpreters", PyInit__xxsubinterpreters},
     {"zlib", PyInit_zlib},
 
     /* CJK codecs */

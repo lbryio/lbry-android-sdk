@@ -158,6 +158,7 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/socketmodule.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/_sre.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/_stat.c \
+  $(MY_PYTHON_SRC_ROOT)/Modules/_statisticsmodule.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/_struct.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/symtablemodule.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/termios.c \
@@ -172,8 +173,10 @@ LOCAL_SRC_FILES := config.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/xxlimited.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/xxlimited_35.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/xxmodule.c \
+  $(MY_PYTHON_SRC_ROOT)/Modules/_xxsubinterpretersmodule.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/xxsubtype.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/zlibmodule.c \
+  $(MY_PYTHON_SRC_ROOT)/Modules/_zoneinfo.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/cjkcodecs/_codecs_cn.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/cjkcodecs/_codecs_hk.c \
   $(MY_PYTHON_SRC_ROOT)/Modules/cjkcodecs/_codecs_iso2022.c \
