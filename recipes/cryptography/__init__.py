@@ -6,7 +6,7 @@ class CryptographyRecipe(CompiledComponentsPythonRecipe):
     name = 'cryptography'
     version = '3.1.1'
     url = 'https://github.com/pyca/cryptography/archive/{version}.tar.gz'
-    depends = [('python2', 'python3crystax'), 'openssl', 'idna', 'pyasn1', 'six', 'setuptools', 'ipaddress', 'cffi']
+    depends = [('python2', 'python3crystax'), 'openssl', 'six', 'setuptools', 'cffi']
     call_hostpython_via_targetpython = False
     patches = ['libpthread.patch']
 
@@ -26,7 +26,7 @@ class CryptographyRecipe(CompiledComponentsPythonRecipe):
             python_version = self.ctx.python_recipe.version[0:3]
             ndk_dir_python = os.path.join(self.ctx.ndk_dir, 'sources/python/', python_version)
             env['LDFLAGS'] += ' -L{}'.format(os.path.join(ndk_dir_python, 'libs', arch.arch))
-            env['LDFLAGS'] += ' -lpython{}m'.format(python_version)
+            env['LDFLAGS'] += ' -lpython{}'.format(python_version)
             # until `pythonforandroid/archs.py` gets merged upstream:
             # https://github.com/kivy/python-for-android/pull/1250/files#diff-569e13021e33ced8b54385f55b49cbe6
             env['CFLAGS'] += ' -I{}/include/python/'.format(ndk_dir_python) + ' -L{}'.format(os.path.join(ndk_dir_python, 'libs', arch.arch))
