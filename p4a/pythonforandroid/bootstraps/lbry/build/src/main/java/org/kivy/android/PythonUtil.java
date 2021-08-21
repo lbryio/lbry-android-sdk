@@ -33,6 +33,7 @@ public class PythonUtil {
         libsList.add("python3.7m");
         libsList.add("python3.8");
         libsList.add("python3.9");
+        libsList.add("python3.10");
         libsList.add("main");
         return libsList;
     }
@@ -52,7 +53,7 @@ public class PythonUtil {
                 // load, and it has failed, give a more
                 // general error
                 Log.v(TAG, "Library loading error: " + e.getMessage());
-                if (lib.startsWith("python3.9") && !foundPython) {
+                if (lib.startsWith("python3.10") && !foundPython) {
                     throw new RuntimeException("Could not load any libpythonXXX.so");
                 } else if (lib.startsWith("python")) {
                     continue;
