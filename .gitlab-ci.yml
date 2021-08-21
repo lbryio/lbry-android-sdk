@@ -11,7 +11,7 @@ build arm64 aar:
     - export BUILD_VERSION=$(cat $CI_PROJECT_DIR/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
   artifacts:
     paths:
-      - bin/lbrysdk-*-release__arm64.aar
+      - bin/lbrysdk-*-arm64-v8a-release.aar
     expire_in: 1 week
   script:
     - export NEXUS_SIGNING_KEYRING_FILE=$CI_PROJECT_DIR/signing.pgp
@@ -26,8 +26,7 @@ build arm64 aar:
     - mv buildozer.spec.arm64.ci buildozer.spec
     - chmod u+x ./build-release.sh
     - ./build-release.sh
-    - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release__arm64.aar
-    - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar /dev/null
+    - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-arm64-v8a-release.aar /dev/null
 
 build arm aar:
   stage: build2
@@ -36,7 +35,7 @@ build arm aar:
     - export BUILD_VERSION=$(cat $CI_PROJECT_DIR/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
   artifacts:
     paths:
-      - bin/lbrysdk-*-release__arm.aar
+      - bin/lbrysdk-*-armeabi-v7a-release.aar
     expire_in: 1 week
   script:
     - export NEXUS_SIGNING_KEYRING_FILE=$CI_PROJECT_DIR/signing.pgp
@@ -52,8 +51,7 @@ build arm aar:
     - mv buildozer.spec.arm.ci buildozer.spec
     - chmod u+x ./build-release.sh
     - ./build-release.sh
-    - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release__arm.aar
-    - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-release.aar /dev/null
+    - cp $CI_PROJECT_DIR/bin/lbrysdk-$BUILD_VERSION-armeabi-v7a-release.aar /dev/null
 
 deploy build.lbry.io:
   image: python:latest
@@ -64,8 +62,8 @@ deploy build.lbry.io:
   before_script:
     - pip install awscli
     - export BUILD_VERSION=$(cat $CI_PROJECT_DIR/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
-    - export BUILD_APK_FILENAME__32=lbrysdk-$BUILD_VERSION-release__arm.aar
-    - export BUILD_APK_FILENAME__64=lbrysdk-$BUILD_VERSION-release__arm64.aar
+    - export BUILD_APK_FILENAME__32=lbrysdk-$BUILD_VERSION-armeabi-v7a-release.aar
+    - export BUILD_APK_FILENAME__64=lbrysdk-$BUILD_VERSION-arm64-v8a-release.aar
   script:
     - aws s3 cp bin/$BUILD_APK_FILENAME__64 s3://build.lbry.io/android/sdk-build-${CI_PIPELINE_IID}_commit-${CI_COMMIT_SHA:0:7}/$BUILD_APK_FILENAME__64
     - aws s3 cp bin/$BUILD_APK_FILENAME__32 s3://build.lbry.io/android/sdk-build-${CI_PIPELINE_IID}_commit-${CI_COMMIT_SHA:0:7}/$BUILD_APK_FILENAME__32
@@ -81,7 +79,7 @@ release aar:
   before_script:
     - pip install awscli githubrelease
     - export BUILD_VERSION=$(cat $CI_PROJECT_DIR/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
-    - export BUILD_APK_FILENAME__32=lbrysdk-$BUILD_VERSION-release__arm.aar
-    - export BUILD_APK_FILENAME__64=lbrysdk-$BUILD_VERSION-release__arm64.aar
+    - export BUILD_APK_FILENAME__32=lbrysdk-$BUILD_VERSION-armeabi-v7a-release.aar
+    - export BUILD_APK_FILENAME__64=lbrysdk-$BUILD_VERSION-arm64-v8a-release.aar
   script:
     - githubrelease release lbryio/lbry-android-sdk create $CI_COMMIT_TAG --publish bin/$BUILD_APK_FILENAME__64 bin/$BUILD_APK_FILENAME__32
