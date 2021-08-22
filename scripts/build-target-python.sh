@@ -276,6 +276,9 @@ build_python_for_abi ()
         armeabi-v7a-hard)
             CFLAGS="-march=armv7-a -mfpu=vfpv3-d16 -mhard-float"
             ;;
+        arm64-v8a)
+            CFLAGS="-march=armv8-a"
+            ;;
         *)
             CFLAGS=""
     esac
@@ -285,7 +288,7 @@ build_python_for_abi ()
             CFLAGS="$CFLAGS -mthumb"
     esac
 
-    local CFLAGS="$CFLAGS --sysroot=$NDK_DIR/platforms/android-$APILEVEL/arch-$ARCH"
+    local CFLAGS="$CFLAGS -O3 -pipe --sysroot=$NDK_DIR/platforms/android-$APILEVEL/arch-$ARCH"
 
     local LDFLAGS=""
     if [ "$ABI" = "armeabi-v7a-hard" ]; then
@@ -306,11 +309,12 @@ build_python_for_abi ()
 
     local CONFIG_SITE=$BUILDDIR_CONFIG/config.site
     {
-        echo 'ac_cv_file__dev_ptmx=no'
+        echo 'ac_cv_file__dev_ptmx=yes'
         echo 'ac_cv_file__dev_ptc=no'
         echo 'ac_cv_func_gethostbyname_r=no'
         if [ "$PYTHON_MAJOR_VERSION" == "3" ]; then
             echo 'ac_cv_func_faccessat=no'
+            echo 'ac_cv_little_endian_double=yes'
         fi
     } >$CONFIG_SITE
     fail_panic "Can't create config.site wrapper"
@@ -346,15 +350,17 @@ build_python_for_abi ()
             echo "    --host=$HOST \\"
             echo "    --build=$BUILD_ON_PLATFORM \\"
             echo "    --prefix=$BUILDDIR_CONFIG/install \\"
+            echo "    --exec-prefix=/usr/local \\"
+            echo "    --enable-loadable-sqlite-extensions \\"
             echo "    --enable-shared \\"
-            echo "    --with-threads \\"
             echo "    --enable-ipv6 \\"
+            echo "    --enable-optimizations \\"
             echo "    --with-computed-gotos \\"
+            echo "    --with-lto \\"
+            echo "    --without-ensurepip \\"
             echo "    ac_cv_file__dev_ptmx=yes \\"
             echo "    ac_cv_file__dev_ptc=no \\"
-            echo "    --without-ensurepip \\"
-            echo "    ac_cv_little_endian_double=yes \\"
-            echo "    --exec-prefix=/usr/local"
+            echo "    ac_cv_little_endian_double=yes"
         fi
     } >$CONFIGURE_WRAPPER
     fail_panic "Can't create configure wrapper"
@@ -648,6 +654,7 @@ build_python_for_abi ()
         echo 'include $(CLEAR_VARS)'
         echo 'LOCAL_MODULE := _queue'
         echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
+        echo 'LOCAL_CFLAGS := -DPy_BUILD_CORE'
         echo 'LOCAL_SRC_FILES := \'
         echo '  $(MY_PYTHON_SRC_ROOT)/Modules/_queuemodule.c'
         echo 'LOCAL_C_INCLUDES := $(MY_PYTHON_SRC_ROOT)/Include/internal'
@@ -951,6 +958,7 @@ build_python_for_abi ()
         echo 'LOCAL_MODULE := unicodedata'
         echo 'LOCAL_CFLAGS := -DPy_BUILD_CORE'
         echo "MY_PYTHON_SRC_ROOT := $PYTHON_SRCDIR"
+        echo 'LOCAL_C_INCLUDES := $(MY_PYTHON_SRC_ROOT)/Include/internal'
         echo 'LOCAL_SRC_FILES := \'
         echo '  $(MY_PYTHON_SRC_ROOT)/Modules/unicodedata.c'
         echo 'LOCAL_STATIC_LIBRARIES := python_shared'
@@ -965,7 +973,7 @@ build_python_for_abi ()
     log "Install python$PYTHON_ABI-$ABI module 'unicodedata' in $PYBIN_INSTALLDIR_MODULES"
     run cp -p -T $OBJDIR_UNICODEDATA/libunicodedata.so $PYBIN_INSTALLDIR_MODULES/unicodedata.so
     fail_panic "Can't install python$PYTHON_ABI-$ABI module 'unicodedata' in $PYBIN_INSTALLDIR_MODULES"
-    
+
 # _json speedups
     local BUILDDIR_JSON="$BUILDDIR/json"
     local OBJDIR_JSON="$BUILDDIR_JSON/obj/local/$ABI"
@@ -994,7 +1002,7 @@ build_python_for_abi ()
     log "Install python$PYTHON_ABI-$ABI module '_json' in $PYBIN_INSTALLDIR_MODULES"
     run cp -p -T $OBJDIR_JSON/lib_json.so $PYBIN_INSTALLDIR_MODULES/_json.so
     fail_panic "Can't install python$PYTHON_ABI-$ABI module '_json' in $PYBIN_INSTALLDIR_MODULES"
-    
+
 # _pickle accelerator
     local BUILDDIR_PICKLE="$BUILDDIR/pickle"
     local OBJDIR_PICKLE="$BUILDDIR_PICKLE/obj/local/$ABI"
