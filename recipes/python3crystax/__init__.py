@@ -277,7 +277,7 @@ class Python3Recipe(TargetPythonRecipe):
                 include_dir = join(sqlite3_build_dir, 'include')
                 if stage < 1.3:
                     ndk_include_dir = join(sqlite3_ndk_dir, 'include')
-                    ensure_dir(sqlite3_ndk_dir)
+                    ensure_dir(ndk_include_dir)
                     shprint(sh.cp, '-f', join(sqlite3_build_dir, 'sqlite3.h'), join(ndk_include_dir, 'sqlite3.h'))
                     shprint(sh.cp, '-f', join(sqlite3_build_dir, 'sqlite3ext.h'), join(ndk_include_dir, 'sqlite3ext.h'))
 
