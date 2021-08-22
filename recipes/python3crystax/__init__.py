@@ -272,7 +272,8 @@ class Python3Recipe(TargetPythonRecipe):
                     if mk_path is None:
                         raise IOError('Android.mk file could not be found in '
                                       'any versions in ndk->sources->sqlite')
-                    shprint(sh.cp, '-f', mk_path, sqlite3_ndk_dir)
+                    if not ssl_recipe.version in mk_path:
+                        shprint(sh.cp, '-f', mk_path, sqlite3_ndk_dir)
 
                 include_dir = join(sqlite3_build_dir, 'include')
                 if stage < 1.3:
