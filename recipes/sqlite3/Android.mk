@@ -1,11 +1,10 @@
-LOCAL_PATH := $(call my-dir)/..
+TOP_PATH := $(call my-dir)/..
 
 include $(CLEAR_VARS)
-
+LOCAL_PATH := $(TOP_PATH)
 LOCAL_SRC_FILES := sqlite3.c
+LOCAL_MODULE := sqlite3_static
+LOCAL_MODULE_FILENAME := libsqlite3
+LOCAL_CFLAGS := -DSQLITE_ENABLE_FTS4 -D_FILE_OFFSET_BITS=64
+include $(BUILD_STATIC_LIBRARY)
 
-LOCAL_MODULE := sqlite3
-
-LOCAL_CFLAGS := -DSQLITE_ENABLE_FTS4
-
-include $(BUILD_SHARED_LIBRARY)

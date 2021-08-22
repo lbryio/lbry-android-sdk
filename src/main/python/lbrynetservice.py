@@ -21,6 +21,9 @@ from lbry.conf import Config
 from lbry.extras.daemon.components import DHT_COMPONENT, HASH_ANNOUNCER_COMPONENT, PEER_PROTOCOL_SERVER_COMPONENT
 from lbry.extras.daemon.daemon import Daemon
 
+import sqlite3
+import ssl
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -122,7 +125,7 @@ def start():
 
     configure_logging(conf)
     log.info('Starting lbry sdk {}'.format(lbrynet_version));
-
+    log.info('openssl: {}, sqlite3: {}'.format(ssl.OPENSSL_VERSION, sqlite3.sqlite_version))
     loop = asyncio.get_event_loop()
     loop.set_debug(lbrynet_android_utils.isDebug())
 

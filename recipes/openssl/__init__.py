@@ -8,7 +8,7 @@ import sh
 
 class OpenSSLRecipe(Recipe):
     version = '1.1'
-    url_version = '1.1.1b'
+    url_version = '1.1.1k'
     url = 'https://www.openssl.org/source/openssl-{url_version}.tar.gz'
 
     @property
