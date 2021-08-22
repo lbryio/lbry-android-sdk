@@ -22,6 +22,9 @@ build arm64 aar:
     - ln -s ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21 ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
     - cp -f $CI_PROJECT_DIR/scripts/build-target-python.sh ~/.buildozer/android/crystax-ndk-10.3.2/build/tools/build-target-python.sh
     - cp -f $CI_PROJECT_DIR/scripts/mangled-glibc-syscalls__arm64.h ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21/arch-arm64/usr/include/crystax/bionic/libc/include/sys/mangled-glibc-syscalls.h
+    - cp -f $CI_PROJECT_DIR/scripts/build-binary.mk ~/.buildozer/android/crystax-ndk-10.3.2/build/core/build-binary.mk
+    - rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
+    - cp -Rf $CI_PROJECT_DIR/scripts/crystax-sources/sqlite ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
     - rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
     - mv buildozer.spec.arm64.ci buildozer.spec
     - chmod u+x ./build-release.sh
@@ -47,6 +50,9 @@ build arm aar:
     - cp -f $CI_PROJECT_DIR/p4a/pythonforandroid/bootstraps/lbry/build/templates/build.tmpl.gradle.arm $CI_PROJECT_DIR/p4a/pythonforandroid/bootstraps/lbry/build/templates/build.tmpl.gradle
     - cp -f $CI_PROJECT_DIR/scripts/build-target-python.sh ~/.buildozer/android/crystax-ndk-10.3.2/build/tools/build-target-python.sh
     - cp -f $CI_PROJECT_DIR/scripts/mangled-glibc-syscalls.h ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21/arch-arm/usr/include/crystax/bionic/libc/include/sys/mangled-glibc-syscalls.h
+    - cp -f $CI_PROJECT_DIR/scripts/build-binary.mk ~/.buildozer/android/crystax-ndk-10.3.2/build/core/build-binary.mk
+    - rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
+    - cp -Rf $CI_PROJECT_DIR/scripts/crystax-sources/sqlite ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
     - rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
     - mv buildozer.spec.arm.ci buildozer.spec
     - chmod u+x ./build-release.sh

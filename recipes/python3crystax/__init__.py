@@ -67,7 +67,7 @@ class Python3Recipe(TargetPythonRecipe):
     url = ''
     name = 'python3crystax'
 
-    depends = ['hostpython3crystax']
+    depends = ['hostpython3crystax', 'sqlite3', 'openssl']
     conflicts = ['python2', 'python3']
 
     from_crystax = True
@@ -127,6 +127,36 @@ class Python3Recipe(TargetPythonRecipe):
         return join(self.ctx.ndk_dir, 'sources', 'python', self.major_minor_version_string,
                     'libs', arch_name)
 
+    def check_for_sqlite3so(self, sqlite_recipe, arch):
+        dynlib_dir = join(self.ctx.ndk_dir, 'sources', 'python', self.version,
+                          'libs', arch.arch, 'modules')
+
+        if os.path.exists(join(dynlib_dir, 'libsqlite3.so')):
+            return 10, 'Shared object exists in ndk'
+
+        major_version = sqlite_recipe.version.split('.')[0]
+        # find out why _ssl.so is missin
+        source_dir = join(self.ctx.ndk_dir, 'sources', 'sqlite', major_version)
+        if not os.path.exists(source_dir):
+            return 0, 'sqlite3 version not present'
+
+        # these two path checks are lifted straight from:
+        # crystax-ndk/build/tools/build-target-python.sh
+        if not os.path.exists(join(source_dir, 'Android.mk')):
+            return 1.1, 'Android.mk is missing in sqlite3 source'
+
+        include_dir = join(source_dir, 'include')
+        if not os.path.exists(join(include_dir, 'sqlite3.h')):
+            return 1.2, 'sqlite3 include dir missing'
+
+        # lastly a check to see whether shared objects for the correct arch
+        # is present in the ndk
+        if not os.path.exists(join(source_dir, 'libs', arch.arch, 'libsqlite3.a')):
+            return 2, 'sqlite3 libs for this arch is missing in ndk'
+
+        return 5, 'Ready to recompile python'
+
+
     def check_for_sslso(self, ssl_recipe, arch):
         # type: (Recipe, str)
         dynlib_dir = join(self.ctx.ndk_dir, 'sources', 'python', self.version,
@@ -136,7 +166,6 @@ class Python3Recipe(TargetPythonRecipe):
             return 10, 'Shared object exists in ndk'
 
         # find out why _ssl.so is missing
-
         source_dir = join(self.ctx.ndk_dir, 'sources', 'openssl', ssl_recipe.version)
         if not os.path.exists(source_dir):
             return 0, 'Openssl version not present'
@@ -155,8 +184,6 @@ class Python3Recipe(TargetPythonRecipe):
                                    'opensslconf_{}.h'.format(under_scored_arch))):
             return 1.3, 'Opensslconf arch header missing from include'
 
-
-
         # lastly a check to see whether shared objects for the correct arch
         # is present in the ndk
         if not os.path.exists(join(source_dir, 'libs', arch.arch)):
@@ -171,6 +198,13 @@ class Python3Recipe(TargetPythonRecipe):
             if os.path.exists(mk_path):
                 return mk_path
 
+    def find_sqlite3_Android_mk(self):
+        sqlite_dir = join(self.ctx.ndk_dir, 'sources', 'sqlite')
+        for version in os.listdir(sqlite_dir):
+            mk_path = join(sqlite_dir, version, 'Android.mk')
+            if os.path.exists(mk_path):
+                return mk_path
+
     def prebuild_arch(self, arch):
         super(Python3Recipe, self).prebuild_arch(arch)
         if self.version in ('3.6', '3.7', '3.9', '3.10'):
@@ -180,18 +214,18 @@ class Python3Recipe(TargetPythonRecipe):
                     'patch_python3.6',
                     'selectors'
                 ]
-                
+
             if self.version in ('3.9', '3.10'):
                 if self.version == '3.9':
                     patches += ['strdup']
-                    
+
                 if self.version == '3.10':
                     patches += ['py3.10.0_posixmodule']
-                
+
                 patches += [
                     'patch_python3.9',
                     'platlibdir',
-                    
+
                     # from https://github.com/kivy/python-for-android/blob/develop/pythonforandroid/recipes/python3/__init__.py#L63
                     'pyconfig_detection',
                     'reproducible-buildinfo',
@@ -200,8 +234,8 @@ class Python3Recipe(TargetPythonRecipe):
 
                 if sh.which('lld') is not None:
                     patches += ['py3.8.1_fix_cortex_a8']
-            
-            
+
+
             Python3Recipe.patches = []
             for patch_name in patches:
                 Python3Recipe.patches.append('patch/{}.patch'.format(patch_name))
@@ -210,8 +244,6 @@ class Python3Recipe(TargetPythonRecipe):
 
             # copy bundled libffi to _ctypes
             sh.cp("-r", join(self.get_recipe_dir(), 'libffi'), join(build_dir, 'Modules', '_ctypes'))
-            print #####Copied bundle####'
-
 
             shprint(sh.ln, '-sf',
                            realpath(join(build_dir, 'Lib/site-packages/README.txt')),
@@ -233,18 +265,60 @@ class Python3Recipe(TargetPythonRecipe):
             shprint(sh.rm, '-f', join(ndk_sources_python_dir, '{}/Android.mk.tmp'.format(self.version)))
 
     def build_arch(self, arch):
-       # If openssl is needed we may have to recompile cPython to get the
+        rebuild = False
+
+        if self.from_crystax and 'sqlite3' in self.ctx.recipe_build_order:
+            info('checking sqlite3 in crystax-python')
+            sqlite_recipe = self.get_recipe('sqlite3', self.ctx)
+            stage, msg = self.check_for_sqlite3so(sqlite_recipe, arch)
+            major_version = sqlite_recipe.version.split('.')[0]
+            info(msg)
+            sqlite3_build_dir = sqlite_recipe.get_build_dir(arch.arch)
+            sqlite3_ndk_dir = join(self.ctx.ndk_dir, 'sources', 'sqlite', major_version)
+
+            if stage < 2:
+                info('copying sqlite3 Android.mk to ndk')
+                ensure_dir(sqlite3_ndk_dir)
+                if stage < 1.2:
+                    # copy include folder and Android.mk to ndk
+                    mk_path = self.find_sqlite3_Android_mk()
+                    if mk_path is None:
+                        raise IOError('Android.mk file could not be found in '
+                                      'any versions in ndk->sources->sqlite')
+                    shprint(sh.cp, '-f', mk_path, sqlite3_ndk_dir)
+
+                include_dir = join(sqlite3_build_dir, 'include')
+                if stage < 1.3:
+                    ndk_include_dir = join(sqlite3_ndk_dir, 'include')
+                    ensure_dir(sqlite3_ndk_dir)
+                    shprint(sh.cp, '-f', join(sqlite3_build_dir, 'sqlite3.h'), join(ndk_include_dir, 'sqlite3.h'))
+                    shprint(sh.cp, '-f', join(sqlite3_build_dir, 'sqlite3ext.h'), join(ndk_include_dir, 'sqlite3ext.h'))
+
+            if stage < 3:
+                info('copying sqlite3 libs to ndk')
+                arch_ndk_lib = join(sqlite3_ndk_dir, 'libs', arch.arch)
+                ensure_dir(arch_ndk_lib)
+                shprint(sh.ln, '-sf',
+                               realpath(join(sqlite3_build_dir, 'libsqlite3')),
+                               join(sqlite3_build_dir, 'libsqlite3.a'))
+                libs = ['libs/{}/libsqlite3.a'.format(arch.arch)]
+                cmd = [join(sqlite3_build_dir, lib) for lib in libs] + [arch_ndk_lib]
+                shprint(sh.cp, '-f', *cmd)
+
+            if stage < 10:
+                rebuild = True
+
+        # If openssl is needed we may have to recompile cPython to get the
         # ssl.py module working properly
         if self.from_crystax and 'openssl' in self.ctx.recipe_build_order:
-            info('Openssl and crystax-python combination may require '
+            info('openssl and crystax-python combination may require '
                  'recompilation of python...')
             ssl_recipe = self.get_recipe('openssl', self.ctx)
             stage, msg = self.check_for_sslso(ssl_recipe, arch)
             stage = 0 if stage < 5 else stage
             info(msg)
             openssl_build_dir = ssl_recipe.get_build_dir(arch.arch)
-            openssl_ndk_dir = join(self.ctx.ndk_dir, 'sources', 'openssl',
-                                   ssl_recipe.version)
+            openssl_ndk_dir = join(self.ctx.ndk_dir, 'sources', 'openssl', ssl_recipe.version)
 
             if stage < 2:
                 info('Copying openssl headers and Android.mk to ndk')
@@ -293,16 +367,19 @@ class Python3Recipe(TargetPythonRecipe):
                 shprint(sh.cp, '-f', *cmd)
 
             if stage < 10:
-                info('Recompiling python-crystax')
-                self.patch_dev_defaults(ssl_recipe)
-                build_script = join(self.ctx.ndk_dir, 'build', 'tools',
-                                    'build-target-python.sh')
+                rebuild = True
 
-                shprint(Command(build_script),
-                        '--ndk-dir={}'.format(self.ctx.ndk_dir),
-                        '--abis={}'.format(arch.arch),
-                        '-j5', '--verbose',
-                        self.get_build_dir(arch.arch))
+        if rebuild:
+            info('Recompiling python-crystax')
+            self.patch_dev_defaults(ssl_recipe)
+            build_script = join(self.ctx.ndk_dir, 'build', 'tools',
+                                'build-target-python.sh')
+
+            shprint(Command(build_script),
+                    '--ndk-dir={}'.format(self.ctx.ndk_dir),
+                    '--abis={}'.format(arch.arch),
+                    '-j5', '--verbose',
+                    self.get_build_dir(arch.arch))
 
         info('Extracting CrystaX python3 from NDK package')
         dirn = self.ctx.get_python_install_dir()
