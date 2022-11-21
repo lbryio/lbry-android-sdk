@@ -15,7 +15,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
       - name: export build version
-        run: echo "BUILD_VERSION"=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')" >> $GITHUB_ENV
+        run: export BUILD_VERSION=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
       - name: build arm64 aar
         run: |
           echo "NEXUS_SIGNING_KEYRING_FILE=$GITHUB_WORKSPACE/signing2.pgp" >> $GITHUB_ENV
@@ -32,6 +32,7 @@ jobs:
           rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
           mv buildozer.spec.arm64.ci buildozer.spec
           chmod u+x ./build-release.sh
+          ls ~/.buildozer/android/
           ./build-release.sh
           cp $GITHUB_WORKSPACE/bin/lbrysdk-${{ env.BUILD_VERSION }}-arm64-v8a-release.aar /dev/null
   build_arm_aar:
