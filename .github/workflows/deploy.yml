@@ -19,6 +19,7 @@ jobs:
           ls -al
           ls -al ~/
           ls -al $GITHUB_WORKSPACE
+          pwd
       - name: export build version
         run: export BUILD_VERSION=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
       - name: setup
