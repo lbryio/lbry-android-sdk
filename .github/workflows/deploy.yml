@@ -16,10 +16,11 @@ jobs:
         uses: actions/checkout@v3
       - name: export build version
         run: export BUILD_VERSION=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
-      - name: build arm64 aar
+      - name: setup
         run: |
           echo "NEXUS_SIGNING_KEYRING_FILE=$GITHUB_WORKSPACE/signing2.pgp" >> $GITHUB_ENV
           export PATH=/usr/bin:$PATH
+
           wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.buildozer/android/
           tar -xf ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz -C ~/.buildozer/android/
           rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
@@ -32,36 +33,54 @@ jobs:
           rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
           mv buildozer.spec.arm64.ci buildozer.spec
           chmod u+x ./build-release.sh
-          ls ~/.buildozer/android/
-          ./build-release.sh
-          cp $GITHUB_WORKSPACE/bin/lbrysdk-${{ env.BUILD_VERSION }}-arm64-v8a-release.aar /dev/null
-  build_arm_aar:
-    runs-on: ubuntu-latest
-    container: lbry/android-base:python39
-    steps:
-      - name: checkout
-        uses: actions/checkout@v3
-      - name: export build version
-        run: export BUILD_VERSION=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
-      - name: build arm aar
-        run: |
-          export NEXUS_SIGNING_KEYRING_FILE=$GITHUB_WORKSPACE/signing2.pgp
-          export PATH=/usr/bin:$PATH
-          wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.buildozer/android/
-          tar -xf ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz -C ~/.buildozer/android/
-          rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
-          ln -s ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21 ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
-          cp -f $GITHUB_WORKSPACE/p4a/pythonforandroid/bootstraps/lbry/build/templates/build.tmpl.gradle.arm $GITHUB_WORKSPACE/p4a/pythonforandroid/bootstraps/lbry/build/templates/build.tmpl.gradle
-          cp -f $GITHUB_WORKSPACE/scripts/build-target-python.sh ~/.buildozer/android/crystax-ndk-10.3.2/build/tools/build-target-python.sh
-          cp -f $GITHUB_WORKSPACE/scripts/mangled-glibc-syscalls.h ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21/arch-arm/usr/include/crystax/bionic/libc/include/sys/mangled-glibc-syscalls.h
-          cp -f $GITHUB_WORKSPACE/scripts/build-binary.mk ~/.buildozer/android/crystax-ndk-10.3.2/build/core/build-binary.mk
-          rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
-          cp -Rf $GITHUB_WORKSPACE/scripts/crystax-sources/sqlite ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
-          rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
-          mv buildozer.spec.arm.ci buildozer.spec
-          chmod u+x ./build-release.sh
-          ./build-release.sh
-          cp $GITHUB_WORKSPACE/bin/lbrysdk-${{ env.BUILD_VERSION }}-armeabi-v7a-release.aar /dev/null
+      - name: debug
+        run: pwd && ls -al
+      # - name: build arm64 aar
+      #   run: |
+      #     echo "NEXUS_SIGNING_KEYRING_FILE=$GITHUB_WORKSPACE/signing2.pgp" >> $GITHUB_ENV
+      #     export PATH=/usr/bin:$PATH
+
+      #     wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.buildozer/android/
+      #     tar -xf ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz -C ~/.buildozer/android/
+      #     rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
+      #     ln -s ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21 ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
+      #     cp -f $GITHUB_WORKSPACE/scripts/build-target-python.sh ~/.buildozer/android/crystax-ndk-10.3.2/build/tools/build-target-python.sh
+      #     cp -f $GITHUB_WORKSPACE/scripts/mangled-glibc-syscalls__arm64.h ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21/arch-arm64/usr/include/crystax/bionic/libc/include/sys/mangled-glibc-syscalls.h
+      #     cp -f $GITHUB_WORKSPACE/scripts/build-binary.mk ~/.buildozer/android/crystax-ndk-10.3.2/build/core/build-binary.mk
+      #     rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
+      #     cp -Rf $GITHUB_WORKSPACE/scripts/crystax-sources/sqlite ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
+      #     rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
+      #     mv buildozer.spec.arm64.ci buildozer.spec
+      #     chmod u+x ./build-release.sh
+      #     ./build-release.sh
+      #     cp $GITHUB_WORKSPACE/bin/lbrysdk-${{ env.BUILD_VERSION }}-arm64-v8a-release.aar /dev/null
+  # build_arm_aar:
+  #   runs-on: ubuntu-latest
+  #   container: lbry/android-base:python39
+  #   steps:
+  #     - name: checkout
+  #       uses: actions/checkout@v3
+  #     - name: export build version
+  #       run: export BUILD_VERSION=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
+  #     - name: build arm aar
+  #       run: |
+  #         export NEXUS_SIGNING_KEYRING_FILE=$GITHUB_WORKSPACE/signing2.pgp
+  #         export PATH=/usr/bin:$PATH
+  #         wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.buildozer/android/
+  #         tar -xf ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz -C ~/.buildozer/android/
+  #         rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
+  #         ln -s ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21 ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
+  #         cp -f $GITHUB_WORKSPACE/p4a/pythonforandroid/bootstraps/lbry/build/templates/build.tmpl.gradle.arm $GITHUB_WORKSPACE/p4a/pythonforandroid/bootstraps/lbry/build/templates/build.tmpl.gradle
+  #         cp -f $GITHUB_WORKSPACE/scripts/build-target-python.sh ~/.buildozer/android/crystax-ndk-10.3.2/build/tools/build-target-python.sh
+  #         cp -f $GITHUB_WORKSPACE/scripts/mangled-glibc-syscalls.h ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21/arch-arm/usr/include/crystax/bionic/libc/include/sys/mangled-glibc-syscalls.h
+  #         cp -f $GITHUB_WORKSPACE/scripts/build-binary.mk ~/.buildozer/android/crystax-ndk-10.3.2/build/core/build-binary.mk
+  #         rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
+  #         cp -Rf $GITHUB_WORKSPACE/scripts/crystax-sources/sqlite ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
+  #         rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
+  #         mv buildozer.spec.arm.ci buildozer.spec
+  #         chmod u+x ./build-release.sh
+  #         ./build-release.sh
+  #         cp $GITHUB_WORKSPACE/bin/lbrysdk-${{ env.BUILD_VERSION }}-armeabi-v7a-release.aar /dev/null
   # deploy_build_lbry_io:
   #   runs-on: ubuntu-latest
   #   container: lbry/android-base:python39
