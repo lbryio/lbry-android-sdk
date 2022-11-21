@@ -1,1 +1,91 @@
 
+name: Publish Assets
+
+on:
+  push: 
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build_arm64_aar:
+    runs-on: ubuntu-latest
+    container: lbry/android-base:python39
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: export build version
+        run: echo "BUILD_VERSION"=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')" >> $GITHUB_ENV
+      - name: build arm64 aar
+        run: |
+          echo "NEXUS_SIGNING_KEYRING_FILE=$GITHUB_WORKSPACE/signing2.pgp" >> $GITHUB_ENV
+          export PATH=/usr/bin:$PATH
+          wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.buildozer/android/
+          tar -xf ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz -C ~/.buildozer/android/
+          rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
+          ln -s ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21 ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
+          cp -f $GITHUB_WORKSPACE/scripts/build-target-python.sh ~/.buildozer/android/crystax-ndk-10.3.2/build/tools/build-target-python.sh
+          cp -f $GITHUB_WORKSPACE/scripts/mangled-glibc-syscalls__arm64.h ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21/arch-arm64/usr/include/crystax/bionic/libc/include/sys/mangled-glibc-syscalls.h
+          cp -f $GITHUB_WORKSPACE/scripts/build-binary.mk ~/.buildozer/android/crystax-ndk-10.3.2/build/core/build-binary.mk
+          rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
+          cp -Rf $GITHUB_WORKSPACE/scripts/crystax-sources/sqlite ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
+          rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
+          mv buildozer.spec.arm64.ci buildozer.spec
+          chmod u+x ./build-release.sh
+          ./build-release.sh
+          cp $GITHUB_WORKSPACE/bin/lbrysdk-${{ env.BUILD_VERSION }}-arm64-v8a-release.aar /dev/null
+  build_arm_aar:
+    runs-on: ubuntu-latest
+    container: lbry/android-base:python39
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: export build version
+        run: export BUILD_VERSION=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
+      - name: build arm aar
+        run: |
+          export NEXUS_SIGNING_KEYRING_FILE=$GITHUB_WORKSPACE/signing2.pgp
+          export PATH=/usr/bin:$PATH
+          wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.buildozer/android/
+          tar -xf ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz -C ~/.buildozer/android/
+          rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
+          ln -s ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21 ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
+          cp -f $GITHUB_WORKSPACE/p4a/pythonforandroid/bootstraps/lbry/build/templates/build.tmpl.gradle.arm $GITHUB_WORKSPACE/p4a/pythonforandroid/bootstraps/lbry/build/templates/build.tmpl.gradle
+          cp -f $GITHUB_WORKSPACE/scripts/build-target-python.sh ~/.buildozer/android/crystax-ndk-10.3.2/build/tools/build-target-python.sh
+          cp -f $GITHUB_WORKSPACE/scripts/mangled-glibc-syscalls.h ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21/arch-arm/usr/include/crystax/bionic/libc/include/sys/mangled-glibc-syscalls.h
+          cp -f $GITHUB_WORKSPACE/scripts/build-binary.mk ~/.buildozer/android/crystax-ndk-10.3.2/build/core/build-binary.mk
+          rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
+          cp -Rf $GITHUB_WORKSPACE/scripts/crystax-sources/sqlite ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
+          rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
+          mv buildozer.spec.arm.ci buildozer.spec
+          chmod u+x ./build-release.sh
+          ./build-release.sh
+          cp $GITHUB_WORKSPACE/bin/lbrysdk-${{ env.BUILD_VERSION }}-armeabi-v7a-release.aar /dev/null
+  # deploy_build_lbry_io:
+  #   runs-on: ubuntu-latest
+  #   container: lbry/android-base:python39
+  #   needs: [build_arm64_aar, build_arm_aar]
+  #   steps:
+  #     - name: dependencies
+  #       run: |
+  #         pip install awscli
+  #         export BUILD_VERSION=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
+  #         export BUILD_APK_FILENAME__32=lbrysdk-$BUILD_VERSION-armeabi-v7a-release.aar
+  #         export BUILD_APK_FILENAME__64=lbrysdk-$BUILD_VERSION-arm64-v8a-release.aar
+  #     - name: upload
+  #       run: |
+  #         aws s3 cp bin/$BUILD_APK_FILENAME__64 s3://build.lbry.io/android/sdk-build-${CI_PIPELINE_IID}_commit-${CI_COMMIT_SHA:0:7}/$BUILD_APK_FILENAME__64
+  #         aws s3 cp bin/$BUILD_APK_FILENAME__32 s3://build.lbry.io/android/sdk-build-${CI_PIPELINE_IID}_commit-${CI_COMMIT_SHA:0:7}/$BUILD_APK_FILENAME__32
+  # release_aar:
+  #   runs-on: ubuntu-latest
+  #   container: python:latest
+  #   needs: [build_arm64_aar, build_arm_aar]
+  #   steps:
+  #     - name: dependencies
+  #       run: |
+  #         pip install awscli githubrelease
+  #         export BUILD_VERSION=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
+  #         export BUILD_APK_FILENAME__32=lbrysdk-$BUILD_VERSION-armeabi-v7a-release.aar
+  #         export BUILD_APK_FILENAME__64=lbrysdk-$BUILD_VERSION-arm64-v8a-release.aar
+  #     - name: release
+  #       run: githubrelease release lbryio/lbry-android-sdk create $CI_COMMIT_TAG --publish bin/$BUILD_APK_FILENAME__64 bin/$BUILD_APK_FILENAME__32
