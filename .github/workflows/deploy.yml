@@ -16,9 +16,6 @@ jobs:
         uses: actions/checkout@v3
       - name: Log the buildozer version
         run: |
-          ls -al
-          ls -al ~/.buildozer
-          ls -al $GITHUB_WORKSPACE
           pwd
       - name: export build version
         run: export BUILD_VERSION=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
