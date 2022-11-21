@@ -17,7 +17,7 @@ jobs:
       - name: Log the buildozer version
         run: |
           ls -al
-          ls -al ~/
+          ls -al ~/.buildozer
           ls -al $GITHUB_WORKSPACE
           pwd
       - name: export build version
@@ -39,8 +39,8 @@ jobs:
           rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
           mv buildozer.spec.arm64.ci buildozer.spec
           chmod u+x ./build-release.sh
-      - name: debug
-        run: pwd && ls -al
+      - name: build release
+        run: ./build-release.sh
       # - name: build arm64 aar
       #   run: |
       #     echo "NEXUS_SIGNING_KEYRING_FILE=$GITHUB_WORKSPACE/signing2.pgp" >> $GITHUB_ENV
