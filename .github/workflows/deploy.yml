@@ -42,25 +42,25 @@ jobs:
           NEXUS_SIGNING_KEY_PASSWORD: ${{ secrets.NEXUS_SIGNING_KEY_PASSWORD }}
           NEXUS_SIGNING_KEY_ID: ${{ secrets.NEXUS_SIGNING_KEY_ID }}
         run: ./build-release.sh
-      - name: debug bin
-        run : ls -al ./bin
-      - name: upload to build_lbry_io
-        run : |
-          pip install awscli
-          export PR_NUMBER=${{ github.event.number }}
+      # - name: debug bin
+      #   run : ls -al ./bin
+      # - name: upload to build_lbry_io
+      #   run : |
+      #     pip install awscli
+      #     export PR_NUMBER=${{ github.event.number }}
           
-          export BUILD_APK_FILENAME__64=lbrysdk-${{ env.BUILD_VERSION }}-arm64-v8a-release.aar
-          aws s3 cp ./bin/${BUILD_APK_FILENAME__64} s3://build.lbry.io/android/sdk-build-${PR_NUMBER}_commit-${{ github.sha }}/${BUILD_APK_FILENAME__64}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-      - name: github release
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          pip install githubrelease
-          export GITHUB_TOKEN=${{ github.token }}
-          githubrelease release lbryio/lbry-android-sdk create ${{ github.ref_name }} --publish bin/${BUILD_APK_FILENAME__64}
+      #     export BUILD_APK_FILENAME__64=lbrysdk-${{ env.BUILD_VERSION }}-arm64-v8a-release.aar
+      #     aws s3 cp ./bin/${BUILD_APK_FILENAME__64} s3://build.lbry.io/android/sdk-build-${PR_NUMBER}_commit-${{ github.sha }}/${BUILD_APK_FILENAME__64}
+      #   env:
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      # - name: github release
+      #   if: startsWith(github.ref, 'refs/tags/v')
+      #   run: |
+      #     pip install githubrelease
+      #     export GITHUB_TOKEN=${{ github.token }}
+      #     githubrelease release lbryio/lbry-android-sdk create ${{ github.ref_name }} --publish bin/${BUILD_APK_FILENAME__64}
 
   build_arm_aar:
     runs-on: ubuntu-latest
@@ -99,50 +99,21 @@ jobs:
           NEXUS_SIGNING_KEY_PASSWORD: ${{ secrets.NEXUS_SIGNING_KEY_PASSWORD }}
           NEXUS_SIGNING_KEY_ID: ${{ secrets.NEXUS_SIGNING_KEY_ID }}
         run: ./build-release.sh
-      - name: upload to build_lbry_io
-        run : |
-          pip install awscli
-          export PR_NUMBER=${{ github.event.number }}
-          export BUILD_APK_FILENAME__32=lbrysdk-${{ env.BUILD_VERSION }}-armeabi-v7a-release.aar
-          aws s3 cp bin/${BUILD_APK_FILENAME__32} s3://build.lbry.io/android/sdk-build-{$PR_NUMBER}_commit-${{ github.sha }}/${BUILD_APK_FILENAME__32}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-      - name: github upload binary
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: skx/github-action-publish-binaries@release-1.3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BUILD_VERSION: ${{ env.BUILD_VERSION }}
-        with: 
-          args: bin/${BUILD_APK_FILENAME__32}
-  # deploy_build_lbry_io:
-  #   runs-on: ubuntu-latest
-  #   container: lbry/android-base:python39
-  #   needs: [build_arm64_aar, build_arm_aar]
-  #   steps:
-  #     - name: dependencies
-  #       run: |
-  #         pip install awscli
-  #         export PR_NUMBER=${{ github.event.number }}
-  #         export BUILD_VERSION=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
-  #         export BUILD_APK_FILENAME__32=lbrysdk-${{ BUILD_VERSION }}-armeabi-v7a-release.aar
-  #         export BUILD_APK_FILENAME__64=lbrysdk-${{ BUILD_VERSION }}-arm64-v8a-release.aar
-  #     - name: upload
-  #       run: |
-  #         aws s3 cp bin/${{ BUILD_APK_FILENAME__64 }} s3://build.lbry.io/android/sdk-build-${{ PR_NUMBER }}_commit-${{ github.sha }}/${{ BUILD_APK_FILENAME__64 }}
-  #         aws s3 cp bin/${{ BUILD_APK_FILENAME__32 }} s3://build.lbry.io/android/sdk-build-${{ PR_NUMBER }}_commit-${{ github.sha }}/${{ BUILD_APK_FILENAME__32 }}
-
-  # release_aar:
-  #   runs-on: ubuntu-latest
-  #   container: python:latest
-  #   needs: [build_arm64_aar, build_arm_aar]
-  #   steps:
-  #     - name: dependencies
-  #       run: |
-  #         pip install awscli githubrelease
-  #         export BUILD_VERSION=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
-  #         export BUILD_APK_FILENAME__32=lbrysdk-${{ BUILD_VERSION }}-armeabi-v7a-release.aar
-  #         export BUILD_APK_FILENAME__64=lbrysdk-${{ BUILD_VERSION }}-arm64-v8a-release.aar
-  #     - name: release
+      # - name: upload to build_lbry_io
+      #   run : |
+      #     pip install awscli
+      #     export PR_NUMBER=${{ github.event.number }}
+      #     export BUILD_APK_FILENAME__32=lbrysdk-${{ env.BUILD_VERSION }}-armeabi-v7a-release.aar
+      #     aws s3 cp bin/${BUILD_APK_FILENAME__32} s3://build.lbry.io/android/sdk-build-{$PR_NUMBER}_commit-${{ github.sha }}/${BUILD_APK_FILENAME__32}
+      #   env:
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      # - name: github upload binary
+      #   if: startsWith(github.ref, 'refs/tags/v')
+      #   uses: skx/github-action-publish-binaries@release-1.3
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     BUILD_VERSION: ${{ env.BUILD_VERSION }}
+      #   with: 
+      #     args: bin/${BUILD_APK_FILENAME__32}
