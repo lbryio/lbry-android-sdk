@@ -41,6 +41,12 @@ jobs:
           mv buildozer.spec.arm64.ci buildozer.spec
           chmod u+x ./build-release.sh
       - name: build release
+        env:
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_STAGING_PROFILE_ID: ${{ secrets.SONATYPE_STAGING_PROFILE_ID }}
+          NEXUS_SIGNING_KEY_PASSWORD: ${{ secrets.NEXUS_SIGNING_KEY_PASSWORD }}
+          NEXUS_SIGNING_KEY_ID: ${{ secrets.NEXUS_SIGNING_KEY_ID }}
         run: ./build-release.sh
       # - name: build arm64 aar
       #   run: |
