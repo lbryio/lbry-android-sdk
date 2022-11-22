@@ -11,6 +11,7 @@ src/main/assets/index.android.bundle
 src/main/assets/index.android.bundle.meta
 *.log
 .vagrant
+.vscode
 
 lbry-android.keystore
 p4a/pythonforandroid/bootstraps/lbry/build/templates/google-services.json

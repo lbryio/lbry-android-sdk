@@ -1,5 +1,5 @@
 # going forward, this should match sdk version
-__version__ = "0.102.0"
+__version__ = "0.111.0"
 
 class ServiceApp(App):
     def build(self):
