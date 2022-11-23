@@ -56,7 +56,7 @@ import org.renpy.android.ResourceManager;
  */
 public final class LbrynetService extends PythonService {
 
-    public static final String LBRY_SDK_VERSION = "0.102.0";
+    public static final String LBRY_SDK_VERSION = "0.112.0";
 
     public static final int SERVICE_NOTIFICATION_GROUP_ID = 5;
     public static final String ACTION_STOP_SERVICE = "io.lbry.browser.ACTION_STOP_SERVICE";
@@ -143,8 +143,7 @@ public final class LbrynetService extends PythonService {
 
         // update the notification with the context intent
         Notification notification = buildNotification();
-        NotificationManager notificationManager =
-            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(1, notification);
     }
 
@@ -159,13 +158,13 @@ public final class LbrynetService extends PythonService {
 
         String serviceDescription = "The LBRY service is running in the background.";
         Notification notification = builder.setColor(ContextCompat.getColor(this, R.color.lbryGreen))
-                                           .setContentText(serviceDescription)
-                                           .setGroup(GROUP_SERVICE)
-                                           .setWhen(System.currentTimeMillis())
-                                           .setSmallIcon(R.drawable.ic_lbry)
-                                           .setOngoing(true)
-                                           .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPendingIntent)
-                                           .build();
+                .setContentText(serviceDescription)
+                .setGroup(GROUP_SERVICE)
+                .setWhen(System.currentTimeMillis())
+                .setSmallIcon(R.drawable.ic_lbry)
+                .setOngoing(true)
+                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPendingIntent)
+                .build();
 
         return notification;
     }
@@ -173,11 +172,10 @@ public final class LbrynetService extends PythonService {
     @Override
     protected void doStartForeground(Bundle extras) {
         downloadManager = new DownloadManager(this);
-        NotificationManager notificationManager =
-            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
-                NOTIFICATION_CHANNEL_ID, "LBRY Browser", NotificationManager.IMPORTANCE_LOW);
+                    NOTIFICATION_CHANNEL_ID, "LBRY Browser", NotificationManager.IMPORTANCE_LOW);
             channel.setDescription("LBRY service notification channel");
             channel.setShowBadge(false);
             notificationManager.createNotificationChannel(channel);
@@ -186,11 +184,11 @@ public final class LbrynetService extends PythonService {
         // Create the notification group
         NotificationCompat.Builder groupBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
         groupBuilder.setContentTitle("LBRY Browser")
-                    .setColor(ContextCompat.getColor(this, R.color.lbryGreen))
-                    .setSmallIcon(R.drawable.ic_lbry)
-                    .setPriority(NotificationCompat.PRIORITY_LOW)
-                    .setGroup(GROUP_SERVICE)
-                    .setGroupSummary(true);
+                .setColor(ContextCompat.getColor(this, R.color.lbryGreen))
+                .setSmallIcon(R.drawable.ic_lbry)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setGroup(GROUP_SERVICE)
+                .setGroupSummary(true);
         notificationManager.notify(SERVICE_NOTIFICATION_GROUP_ID, groupBuilder.build());
 
         Notification notification = buildNotification();
@@ -221,7 +219,8 @@ public final class LbrynetService extends PythonService {
                         JSONObject result = status.getJSONObject("result");
                         if (result.has("startup_status")) {
                             JSONObject startupStatus = result.getJSONObject("startup_status");
-                            fileManagerReady = startupStatus.has("file_manager") && startupStatus.getBoolean("file_manager");
+                            fileManagerReady = startupStatus.has("file_manager")
+                                    && startupStatus.getBoolean("file_manager");
                         }
                     }
                 }
@@ -232,8 +231,10 @@ public final class LbrynetService extends PythonService {
                 params.put("page_size", 100);
                 params.put("reverse", true);
                 params.put("sort", "added_on");
-                /*params.put("status", "stopped");
-                params.put("comparison", "ne");*/
+                /*
+                 * params.put("status", "stopped");
+                 * params.put("comparison", "ne");
+                 */
 
                 String fileList = Utils.sdkCall("file_list", params);
                 if (fileList != null) {
@@ -273,7 +274,8 @@ public final class LbrynetService extends PythonService {
                                 if (fileItems != null && fileItems.length() > 0) {
                                     // TODO: Create Java FileItem class
                                     JSONObject item = fileItems.getJSONObject(0);
-                                    String downloadPath = item.isNull("download_path") ? null : item.getString("download_path");
+                                    String downloadPath = item.isNull("download_path") ? null
+                                            : item.getString("download_path");
                                     if (downloadPath == null || downloadPath.trim().length() == 0) {
                                         return;
                                     }
@@ -281,7 +283,8 @@ public final class LbrynetService extends PythonService {
                                     String claimName = item.getString("claim_name");
                                     String uri = String.format("lbry://%s#%s", claimName, claimId);
 
-                                    if (!downloadManager.isDownloadActive(uri) && !downloadManager.isDownloadCompleted(uri)) {
+                                    if (!downloadManager.isDownloadActive(uri)
+                                            && !downloadManager.isDownloadCompleted(uri)) {
                                         downloadManager.clearWrittenBytesForDownload(uri);
                                         File file = new File(downloadPath);
                                         Intent intent = createDownloadEventIntent(uri, outpoint, item.toString());
@@ -443,7 +446,6 @@ public final class LbrynetService extends PythonService {
         }
     }
 
-
     private static Intent createDownloadEventIntent(String uri, String outpoint, String fileInfo) {
         Intent intent = new Intent();
         intent.setAction(DownloadManager.ACTION_DOWNLOAD_EVENT);
@@ -470,14 +472,15 @@ public final class LbrynetService extends PythonService {
 
         if (intent == null) {
             intent = ServiceHelper.buildIntent(
-                getApplicationContext(), "", LbrynetService.class, "lbrynetservice");
+                    getApplicationContext(), "", LbrynetService.class, "lbrynetservice");
         }
 
         // send a broadcast indicating that the service has started
         Intent startedIntent = new Intent(LBRY_SDK_SERVICE_STARTED);
         sendBroadcast(startedIntent);
 
-        // no need to iterate the checks repeatedly here, because this is service startup
+        // no need to iterate the checks repeatedly here, because this is service
+        // startup
         checkDownloads();
 
         return super.onStartCommand(intent, flags, startId);
@@ -496,8 +499,8 @@ public final class LbrynetService extends PythonService {
         }
 
         Context context = getApplicationContext();
-        NotificationManager notificationManager =
-            (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) context
+                .getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancelAll();
 
         super.onDestroy();
@@ -550,7 +553,7 @@ public final class LbrynetService extends PythonService {
         // If the disk data is out of date, extract it and write the
         // version file.
         // if (! data_version.equals(disk_version)) {
-        if (! data_version.equals(disk_version)) {
+        if (!data_version.equals(disk_version)) {
             Log.v(TAG, "Extracting " + resource + " assets.");
 
             recursiveDelete(target);
@@ -558,7 +561,7 @@ public final class LbrynetService extends PythonService {
 
             AssetExtract ae = new AssetExtract(getApplicationContext());
             if (!ae.extractTar(resource + ".mp3", target.getAbsolutePath())) {
-                //toastError("Could not extract " + resource + " data.");
+                // toastError("Could not extract " + resource + " data.");
                 Log.e(TAG, "Could not extract " + resource + " data.");
             }
 
