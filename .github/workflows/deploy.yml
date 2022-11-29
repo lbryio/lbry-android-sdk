@@ -1,5 +1,6 @@
 name: Publish Assets
 
+runs-on: self-hosted
 on:
   push: 
     branches: [master, test-112-deps]
