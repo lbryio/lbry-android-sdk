@@ -1,13 +1,12 @@
 name: Publish Assets
 
-runs-on: self-hosted
 on:
   push: 
     branches: [master, test-112-deps]
 
 jobs:
   build_arm64_aar:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     container: lbry/android-base:python39
     steps:
       - name: checkout
