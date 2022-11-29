@@ -14,10 +14,10 @@ import android.app.PendingIntent;
 import android.os.Process;
 import java.io.File;
 
-import org.kivy.android.PythonUtil;
-
-import org.renpy.android.Hardware;
-
+//imports for channel definition
+import android.app.NotificationManager;
+import android.app.NotificationChannel;
+import android.graphics.Color;
 
 public class PythonService extends Service implements Runnable {
 
@@ -33,6 +33,8 @@ public class PythonService extends Service implements Runnable {
     private String serviceEntrypoint;
     // Argument to pass to Python code,
     private String pythonServiceArgument;
+
+
     public static PythonService mService = null;
     private Intent startIntent = null;
 
@@ -40,10 +42,6 @@ public class PythonService extends Service implements Runnable {
 
     public void setAutoRestartService(boolean restart) {
         autoRestartService = restart;
-    }
-
-    public boolean canDisplayNotification() {
-        return true;
     }
 
     public int startType() {
@@ -64,10 +62,15 @@ public class PythonService extends Service implements Runnable {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (pythonThread != null) {
             Log.v("python service", "service exists, do not start again");
-            return START_NOT_STICKY;
+            return startType();
+        }
+	//intent is null if OS restarts a STICKY service
+        if (intent == null) {
+            Context context = getApplicationContext();
+            intent = getThisDefaultIntent(context, "");
         }
 
-		startIntent = intent;
+        startIntent = intent;
         Bundle extras = intent.getExtras();
         androidPrivate = extras.getString("androidPrivate");
         androidArgument = extras.getString("androidArgument");
@@ -75,28 +78,38 @@ public class PythonService extends Service implements Runnable {
         pythonName = extras.getString("pythonName");
         pythonHome = extras.getString("pythonHome");
         pythonPath = extras.getString("pythonPath");
+        boolean serviceStartAsForeground = (
+            extras.getString("serviceStartAsForeground").equals("true")
+        );
         pythonServiceArgument = extras.getString("pythonServiceArgument");
-
         pythonThread = new Thread(this);
         pythonThread.start();
 
-        if (canDisplayNotification()) {
+        if (serviceStartAsForeground) {
             doStartForeground(extras);
         }
 
         return startType();
     }
 
+    protected int getServiceId() {
+        return 1;
+    }
+
+    protected Intent getThisDefaultIntent(Context ctx, String pythonServiceArgument) {
+        return null;
+    }
+
     protected void doStartForeground(Bundle extras) {
         String serviceTitle = extras.getString("serviceTitle");
         String serviceDescription = extras.getString("serviceDescription");
-
         Notification notification;
         Context context = getApplicationContext();
         Intent contextIntent = new Intent(context, PythonActivity.class);
         PendingIntent pIntent = PendingIntent.getActivity(context, 0, contextIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+            PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             notification = new Notification(
                 context.getApplicationInfo().icon, serviceTitle, System.currentTimeMillis());
             try {
@@ -109,14 +122,26 @@ public class PythonService extends Service implements Runnable {
                      IllegalArgumentException | InvocationTargetException e) {
             }
         } else {
-            Notification.Builder builder = new Notification.Builder(context);
+            // for android 8+ we need to create our own channel
+            // https://stackoverflow.com/questions/47531742/startforeground-fail-after-upgrade-to-android-8-1
+            String NOTIFICATION_CHANNEL_ID = "org.kivy.p4a";    //TODO: make this configurable
+            String channelName = "Background Service";                //TODO: make this configurable
+            NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, 
+                NotificationManager.IMPORTANCE_NONE);
+            
+            chan.setLightColor(Color.BLUE);
+            chan.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+            NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            manager.createNotificationChannel(chan);
+
+            Notification.Builder builder = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID);
             builder.setContentTitle(serviceTitle);
             builder.setContentText(serviceDescription);
             builder.setContentIntent(pIntent);
             builder.setSmallIcon(context.getApplicationInfo().icon);
             notification = builder.build();
         }
-        startForeground(1, notification);
+        startForeground(getServiceId(), notification);
     }
 
     @Override
@@ -137,7 +162,10 @@ public class PythonService extends Service implements Runnable {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-        stopSelf();
+        //sticky servcie runtime/restart is managed by the OS. leave it running when app is closed
+        if (startType() != START_STICKY) {
+            stopSelf();
+        }
     }
 
     @Override

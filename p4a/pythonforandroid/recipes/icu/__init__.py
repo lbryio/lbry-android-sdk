@@ -1,33 +1,57 @@
 import sh
 import os
-from os.path import join, isdir
-from pythonforandroid.recipe import NDKRecipe
+import platform
+from os.path import join, isdir, exists
+from multiprocessing import cpu_count
+from pythonforandroid.recipe import Recipe
 from pythonforandroid.toolchain import shprint
 from pythonforandroid.util import current_directory, ensure_dir
 
 
-class ICURecipe(NDKRecipe):
+class ICURecipe(Recipe):
     name = 'icu4c'
     version = '57.1'
-    url = 'http://download.icu-project.org/files/icu4c/57.1/icu4c-57_1-src.tgz'
+    major_version = version.split('.')[0]
+    url = (
+        "https://github.com/unicode-org/icu/releases/download/"
+        "release-{version_hyphen}/icu4c-{version_underscore}-src.tgz"
+    )
 
-    depends = [('hostpython2', 'hostpython3')]  # installs in python
-    generated_libraries = [
-        'libicui18n.so', 'libicuuc.so', 'libicudata.so', 'libicule.so']
+    depends = ['hostpython3']  # installs in python
+    patches = ['disable-libs-version.patch']
 
-    def get_lib_dir(self, arch):
-        lib_dir = join(self.ctx.get_python_install_dir(), "lib")
-        ensure_dir(lib_dir)
-        return lib_dir
+    built_libraries = {
+        'libicui18n{}.so'.format(major_version): 'build_icu_android/lib',
+        'libicuuc{}.so'.format(major_version): 'build_icu_android/lib',
+        'libicudata{}.so'.format(major_version): 'build_icu_android/lib',
+        'libicule{}.so'.format(major_version): 'build_icu_android/lib',
+        'libicuio{}.so'.format(major_version): 'build_icu_android/lib',
+        'libicutu{}.so'.format(major_version): 'build_icu_android/lib',
+        'libiculx{}.so'.format(major_version): 'build_icu_android/lib',
+    }
 
-    def prepare_build_dir(self, arch):
-        if self.ctx.android_api > 19:
-            # greater versions do not have /usr/include/sys/exec_elf.h
-            raise RuntimeError("icu needs an android api <= 19")
+    @property
+    def versioned_url(self):
+        if self.url is None:
+            return None
+        return self.url.format(
+            version=self.version,
+            version_underscore=self.version.replace('.', '_'),
+            version_hyphen=self.version.replace('.', '-'))
 
-        super(ICURecipe, self).prepare_build_dir(arch)
+    def get_recipe_dir(self):
+        """
+        .. note:: We need to overwrite `Recipe.get_recipe_dir` due to the
+                  mismatch name between the recipe's folder (icu) and the value
+                  of `ICURecipe.name` (icu4c).
+        """
+        if self.ctx.local_recipes is not None:
+            local_recipe_dir = join(self.ctx.local_recipes, 'icu')
+            if exists(local_recipe_dir):
+                return local_recipe_dir
+        return join(self.ctx.root_dir, 'recipes', 'icu')
 
-    def build_arch(self, arch, *extra_args):
+    def build_arch(self, arch):
         env = self.get_recipe_env(arch).copy()
         build_root = self.get_build_dir(arch.arch)
 
@@ -40,7 +64,7 @@ class ICURecipe(NDKRecipe):
             return build_dest, True
 
         icu_build = join(build_root, "icu_build")
-        build_linux, exists = make_build_dest("build_icu_linux")
+        build_host, exists = make_build_dest("build_icu_host")
 
         host_env = os.environ.copy()
         # reduce the function set
@@ -51,102 +75,53 @@ class ICURecipe(NDKRecipe):
             "-DUCONFIG_NO_TRANSLITERATION=0 ")
 
         if not exists:
+            icu4c_host_platform = platform.system()
+            if icu4c_host_platform == "Darwin":
+                icu4c_host_platform = "MacOSX"
             configure = sh.Command(
                 join(build_root, "source", "runConfigureICU"))
-            with current_directory(build_linux):
+            with current_directory(build_host):
                 shprint(
                     configure,
-                    "Linux",
+                    icu4c_host_platform,
                     "--prefix="+icu_build,
                     "--enable-extras=no",
                     "--enable-strict=no",
-                    "--enable-static",
+                    "--enable-static=no",
                     "--enable-tests=no",
                     "--enable-samples=no",
                     _env=host_env)
-                shprint(sh.make, "-j5", _env=host_env)
+                shprint(sh.make, "-j", str(cpu_count()), _env=host_env)
                 shprint(sh.make, "install", _env=host_env)
-
         build_android, exists = make_build_dest("build_icu_android")
         if not exists:
-
             configure = sh.Command(join(build_root, "source", "configure"))
-
-            include = (
-                " -I{ndk}/sources/cxx-stl/gnu-libstdc++/{version}/include/"
-                " -I{ndk}/sources/cxx-stl/gnu-libstdc++/{version}/libs/"
-                "{arch}/include")
-            include = include.format(ndk=self.ctx.ndk_dir,
-                                     version=env["TOOLCHAIN_VERSION"],
-                                     arch=arch.arch)
-            env["CPPFLAGS"] = env["CXXFLAGS"] + " "
-            env["CPPFLAGS"] += host_env["CPPFLAGS"]
-            env["CPPFLAGS"] += include
-
-            lib = "{ndk}/sources/cxx-stl/gnu-libstdc++/{version}/libs/{arch}"
-            lib = lib.format(ndk=self.ctx.ndk_dir,
-                             version=env["TOOLCHAIN_VERSION"],
-                             arch=arch.arch)
-            env["LDFLAGS"] += " -lgnustl_shared -L"+lib
-
-            env.pop("CFLAGS", None)
-            env.pop("CXXFLAGS", None)
 
             with current_directory(build_android):
                 shprint(
                     configure,
-                    "--with-cross-build="+build_linux,
+                    "--with-cross-build="+build_host,
                     "--enable-extras=no",
                     "--enable-strict=no",
-                    "--enable-static",
+                    "--enable-static=no",
                     "--enable-tests=no",
                     "--enable-samples=no",
-                    "--host="+env["TOOLCHAIN_PREFIX"],
+                    "--host="+arch.command_prefix,
                     "--prefix="+icu_build,
                     _env=env)
-                shprint(sh.make, "-j5", _env=env)
+                shprint(sh.make, "-j", str(cpu_count()), _env=env)
                 shprint(sh.make, "install", _env=env)
 
-        self.copy_files(arch)
-
-    def copy_files(self, arch):
-        env = self.get_recipe_env(arch)
-
-        lib = "{ndk}/sources/cxx-stl/gnu-libstdc++/{version}/libs/{arch}"
-        lib = lib.format(ndk=self.ctx.ndk_dir,
-                         version=env["TOOLCHAIN_VERSION"],
-                         arch=arch.arch)
-        stl_lib = join(lib, "libgnustl_shared.so")
-        dst_dir = join(self.ctx.get_site_packages_dir(), "..", "lib-dynload")
-        shprint(sh.cp, stl_lib, dst_dir)
-
-        src_lib = join(self.get_build_dir(arch.arch), "icu_build", "lib")
-        dst_lib = self.get_lib_dir(arch)
-
-        src_suffix = "." + self.version
-        dst_suffix = "." + self.version.split(".")[0]  # main version
-        for lib in self.generated_libraries:
-            shprint(sh.cp, join(src_lib, lib+src_suffix),
-                    join(dst_lib, lib+dst_suffix))
+    def install_libraries(self, arch):
+        super().install_libraries(arch)
 
         src_include = join(
             self.get_build_dir(arch.arch), "icu_build", "include")
         dst_include = join(
-            self.ctx.get_python_install_dir(), "include", "icu")
+            self.ctx.get_python_install_dir(arch.arch), "include", "icu")
         ensure_dir(dst_include)
         shprint(sh.cp, "-r", join(src_include, "layout"), dst_include)
         shprint(sh.cp, "-r", join(src_include, "unicode"), dst_include)
-
-        # copy stl library
-        lib = "{ndk}/sources/cxx-stl/gnu-libstdc++/{version}/libs/{arch}"
-        lib = lib.format(ndk=self.ctx.ndk_dir,
-                         version=env["TOOLCHAIN_VERSION"],
-                         arch=arch.arch)
-        stl_lib = join(lib, "libgnustl_shared.so")
-
-        dst_dir = join(self.ctx.get_python_install_dir(), "lib")
-        ensure_dir(dst_dir)
-        shprint(sh.cp, stl_lib, dst_dir)
 
 
 recipe = ICURecipe()

@@ -1,19 +1,30 @@
-from pythonforandroid.recipe import NDKRecipe
+from pythonforandroid.recipe import Recipe
+from pythonforandroid.logger import shprint
+from pythonforandroid.util import current_directory
+from multiprocessing import cpu_count
+import sh
 
 
-class PngRecipe(NDKRecipe):
+class PngRecipe(Recipe):
     name = 'png'
-    # This version is the last `sha commit` published in the repo (it's more
-    # than one year old...) and it's for libpng version `1.6.29`. We set a
-    # commit for a version because the author of the github's repo never
-    # released/tagged it, despite He performed the necessary changes in
-    # master branch.
-    version = 'b43b4c6'
+    version = '1.6.37'
+    url = 'https://github.com/glennrp/libpng/archive/v{version}.zip'
+    built_libraries = {'libpng16.so': '.libs'}
 
-    # TODO: Try to move the repo to mainline
-    url = 'https://github.com/julienr/libpng-android/archive/{version}.zip'
-
-    generated_libraries = ['libpng.a']
+    def build_arch(self, arch):
+        build_dir = self.get_build_dir(arch.arch)
+        with current_directory(build_dir):
+            env = self.get_recipe_env(arch)
+            shprint(
+                sh.Command('./configure'),
+                '--host=' + arch.command_prefix,
+                '--target=' + arch.command_prefix,
+                '--disable-static',
+                '--enable-shared',
+                '--prefix={}/install'.format(self.get_build_dir(arch.arch)),
+                _env=env,
+            )
+            shprint(sh.make, '-j', str(cpu_count()), _env=env)
 
 
 recipe = PngRecipe()

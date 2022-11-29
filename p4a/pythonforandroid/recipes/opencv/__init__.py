@@ -1,10 +1,8 @@
 from os.path import join
 import sh
 from pythonforandroid.recipe import NDKRecipe
-from pythonforandroid.toolchain import (
-    current_directory,
-    shprint,
-)
+from pythonforandroid.util import current_directory
+from pythonforandroid.logger import shprint
 from multiprocessing import cpu_count
 
 
@@ -15,7 +13,7 @@ class OpenCVRecipe(NDKRecipe):
         build of most of the libraries of the opencv's package, so we can
         process images, videos, objects, photos...
     '''
-    version = '4.0.1'
+    version = '4.5.1'
     url = 'https://github.com/opencv/opencv/archive/{version}.zip'
     depends = ['numpy']
     patches = ['patches/p4a_build.patch']
@@ -33,14 +31,14 @@ class OpenCVRecipe(NDKRecipe):
         'libopencv_video.so',
         'libopencv_dnn.so',
         'libopencv_imgcodecs.so',
-        'libopencv_photo.so'
+        'libopencv_photo.so',
     ]
 
     def get_lib_dir(self, arch):
         return join(self.get_build_dir(arch.arch), 'build', 'lib', arch.arch)
 
     def get_recipe_env(self, arch):
-        env = super(OpenCVRecipe, self).get_recipe_env(arch)
+        env = super().get_recipe_env(arch)
         env['ANDROID_NDK'] = self.ctx.ndk_dir
         env['ANDROID_SDK'] = self.ctx.sdk_dir
         return env
@@ -48,16 +46,24 @@ class OpenCVRecipe(NDKRecipe):
     def build_arch(self, arch):
         build_dir = join(self.get_build_dir(arch.arch), 'build')
         shprint(sh.mkdir, '-p', build_dir)
+
+        opencv_extras = []
+        if 'opencv_extras' in self.ctx.recipe_build_order:
+            opencv_extras_dir = self.get_recipe(
+                'opencv_extras', self.ctx).get_build_dir(arch.arch)
+            opencv_extras = [
+                f'-DOPENCV_EXTRA_MODULES_PATH={opencv_extras_dir}/modules',
+                '-DBUILD_opencv_legacy=OFF',
+            ]
+
         with current_directory(build_dir):
             env = self.get_recipe_env(arch)
 
             python_major = self.ctx.python_recipe.version[0]
             python_include_root = self.ctx.python_recipe.include_root(arch.arch)
-            python_site_packages = self.ctx.get_site_packages_dir()
+            python_site_packages = self.ctx.get_site_packages_dir(arch)
             python_link_root = self.ctx.python_recipe.link_root(arch.arch)
-            python_link_version = self.ctx.python_recipe.major_minor_version_string
-            if 'python3' in self.ctx.python_recipe.name:
-                python_link_version += 'm'
+            python_link_version = self.ctx.python_recipe.link_version
             python_library = join(python_link_root,
                                   'libpython{}.so'.format(python_link_version))
             python_include_numpy = join(python_site_packages,
@@ -69,6 +75,8 @@ class OpenCVRecipe(NDKRecipe):
                     '-DANDROID_STANDALONE_TOOLCHAIN={}'.format(self.ctx.ndk_dir),
                     '-DANDROID_NATIVE_API_LEVEL={}'.format(self.ctx.ndk_api),
                     '-DANDROID_EXECUTABLE={}/tools/android'.format(env['ANDROID_SDK']),
+                    '-DANDROID_SDK_TOOLS_VERSION=6514223',
+                    '-DANDROID_PROJECTS_SUPPORT_GRADLE=ON',
 
                     '-DCMAKE_TOOLCHAIN_FILE={}'.format(
                         join(self.ctx.ndk_dir, 'build', 'cmake',
@@ -121,6 +129,8 @@ class OpenCVRecipe(NDKRecipe):
                         major=python_major, numpy_include=python_include_numpy),
                     '-DPYTHON{major}_PACKAGES_PATH={site_packages}'.format(
                         major=python_major, site_packages=python_site_packages),
+
+                    *opencv_extras,
 
                     self.get_build_dir(arch.arch),
                     _env=env)

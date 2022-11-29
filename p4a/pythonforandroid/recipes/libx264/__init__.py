@@ -1,31 +1,29 @@
-from pythonforandroid.toolchain import Recipe, current_directory, shprint
-from os.path import exists, join, realpath
+from pythonforandroid.recipe import Recipe
+from pythonforandroid.util import current_directory
+from pythonforandroid.logger import shprint
+from multiprocessing import cpu_count
+from os.path import realpath
 import sh
 
 
 class LibX264Recipe(Recipe):
-    version = 'x264-snapshot-20171218-2245-stable'  # using mirror url since can't use ftp
-    url = 'http://mirror.yandex.ru/mirrors/ftp.videolan.org/x264/snapshots/{version}.tar.bz2'
-
-    def should_build(self, arch):
-        build_dir = self.get_build_dir(arch.arch)
-        return not exists(join(build_dir, 'lib', 'libx264.a'))
+    version = '5db6aa6cab1b146e07b60cc1736a01f21da01154'  # commit of latest known stable version
+    url = 'https://code.videolan.org/videolan/x264/-/archive/{version}/x264-{version}.zip'
+    built_libraries = {'libx264.a': 'lib'}
 
     def build_arch(self, arch):
         with current_directory(self.get_build_dir(arch.arch)):
             env = self.get_recipe_env(arch)
             configure = sh.Command('./configure')
             shprint(configure,
-                    '--cross-prefix=arm-linux-androideabi-',
-                    '--host=arm-linux',
+                    f'--host={arch.command_prefix}',
                     '--disable-asm',
                     '--disable-cli',
                     '--enable-pic',
-                    '--disable-shared',
                     '--enable-static',
                     '--prefix={}'.format(realpath('.')),
                     _env=env)
-            shprint(sh.make, '-j4', _env=env)
+            shprint(sh.make, '-j', str(cpu_count()), _env=env)
             shprint(sh.make, 'install', _env=env)
 
 

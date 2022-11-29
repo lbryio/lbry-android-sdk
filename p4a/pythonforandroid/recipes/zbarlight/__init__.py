@@ -13,10 +13,10 @@ class ZBarLightRecipe(PythonRecipe):
     depends = ['setuptools', 'libzbar']
 
     def get_recipe_env(self, arch=None, with_flags_in_cc=True):
-        env = super(ZBarLightRecipe, self).get_recipe_env(arch, with_flags_in_cc)
+        env = super().get_recipe_env(arch, with_flags_in_cc)
         libzbar = self.get_recipe('libzbar', self.ctx)
         libzbar_dir = libzbar.get_build_dir(arch.arch)
-        env['PYTHON_ROOT'] = self.ctx.get_python_install_dir()
+        env['PYTHON_ROOT'] = self.ctx.get_python_install_dir(arch.arch)
         env['CFLAGS'] += ' -I' + join(libzbar_dir, 'include')
         env['LDFLAGS'] += ' -L' + join(libzbar_dir, 'zbar', '.libs')
         env['LIBS'] = env.get('LIBS', '') + ' -landroid -lzbar'

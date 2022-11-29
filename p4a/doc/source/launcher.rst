@@ -4,7 +4,7 @@ Launcher
 ========
 
 The Kivy Launcher is an Android application that can run any Kivy app
-stored in `kivy` folder on SD Card. You can download the latest stable
+stored in the `kivy` folder on the SD Card. You can download the latest stable
 version for your android device from the
 `Play Store <https://play.google.com/store/apps/details?id=org.kivy.pygame>`_.
 
@@ -13,7 +13,7 @@ permissions, usually listed in the description in the store. Those
 aren't always enough for an application to run or even launch if you
 work with other dependencies that are not packaged.
 
-The Kivy Launcher is intended for quick and simple testing, for
+The Kivy Launcher is intended for quick and simple testing. For
 anything more advanced we recommend building your own APK with
 python-for-android.
 
@@ -22,7 +22,7 @@ Building
 
 The Kivy Launcher is built using python-for-android. To get the most recent
 versions of packages you need to clean them first, so that the packager won't
-grab an old (cached) package instead of fresh one.
+grab an old (cached) package instead of a fresh one.
 
 .. highlight:: none
 
@@ -36,7 +36,7 @@ grab an old (cached) package instead of fresh one.
             --name="App name" \
             --version=x.y.z \
             --android_api XY \
-            --bootstrap=pygame or sdl2 \
+            --bootstrap=sdl2 \
             --launcher \
             --minsdk 13
 
@@ -48,7 +48,7 @@ grab an old (cached) package instead of fresh one.
 .. warning::
 
     Do not use any of `--private`, `--public`, `--dir` or other arguments for
-    adding `main.py` or `main.pyo` to the app. The argument `--launcher` is
+    adding `main.py` or `main.pyc` to the app. The argument `--launcher` is
     above them and tells the p4a to build the launcher version of the APK.
 
 Usage
@@ -78,8 +78,8 @@ to change other settings.
 After you set your `android.txt` file, you can now run the launcher
 and start any available app from the list.
 
-To differentiate between apps in ``/sdcard/kivy`` you can include an icon
-named ``icon.png`` to the folder. The icon should be a square.
+To differentiate between apps in ``/sdcard/kivy``, you can include an icon
+named ``icon.png`` in the folder. The icon should be a square.
 
 Release on the market
 ---------------------
@@ -91,12 +91,8 @@ it changes quickly and needs testing.
 Source code
 -----------
 
-.. |renpy| replace:: pygame org.renpy.android
 .. |kivy| replace:: sdl2 org.kivy.android
 
-.. _renpy:
-    https://github.com/kivy/python-for-android/tree/master/\
-    pythonforandroid/bootstraps/pygame/build/src/org/renpy/android
 .. _sdl2:
     https://github.com/kivy/python-for-android/tree/master/\
     pythonforandroid/bootstraps/sdl2/build/src/org/kivy/android

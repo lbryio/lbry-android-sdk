@@ -5,6 +5,7 @@ class EvdevRecipe(CompiledComponentsPythonRecipe):
     name = 'evdev'
     version = 'v0.4.7'
     url = 'https://github.com/gvalkov/python-evdev/archive/{version}.zip'
+    call_hostpython_via_targetpython = False
 
     depends = []
 
@@ -17,8 +18,8 @@ class EvdevRecipe(CompiledComponentsPythonRecipe):
                'evdev-permissions.patch']
 
     def get_recipe_env(self, arch=None):
-        env = super(EvdevRecipe, self).get_recipe_env(arch)
-        env['NDKPLATFORM'] = self.ctx.ndk_platform
+        env = super().get_recipe_env(arch)
+        env['SYSROOT'] = self.ctx.ndk.sysroot
         return env
 
 

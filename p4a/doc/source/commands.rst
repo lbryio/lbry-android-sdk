@@ -67,19 +67,19 @@ supply those that you need.
   distribution must contain, as a comma separated list. These must be
   names of recipes or the pypi names of Python modules.
 
-``--force_build BOOL``
+``--force-build BOOL``
   Whether the distribution must be compiled from scratch.
 
 ``--arch``
-  The architecture to build for. Currently only one architecture can be 
-  targeted at a time, and a given distribution can only include one architecture.
+  The architecture to build for. You can specify multiple architectures to build for
+  at the same time. As an example ``p4a ... --arch arm64-v8a --arch armeabi-v7a ...``
+  will build a distribution for both ``arm64-v8a`` and ``armeabi-v7a``.
   
 ``--bootstrap BOOTSTRAP``
   The Java bootstrap to use for your application. You mostly don't
   need to worry about this or set it manually, as an appropriate
   bootstrap will be chosen from your ``--requirements``. Current
-  choices are ``sdl2`` or ``pygame``; ``sdl2`` is experimental but
-  preferable where possible.
+  choices are ``sdl2`` (used with Kivy and most other apps) or ``webview``.
 
 
 .. note:: These options are preliminary. Others will include toggles

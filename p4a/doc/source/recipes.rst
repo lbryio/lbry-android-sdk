@@ -12,9 +12,8 @@ to take care of compilation for any compiled components, as these must
 be compiled for Android with the correct architecture.
 
 python-for-android comes with many recipes for popular modules. No
-recipe is necessary to use of Python modules with no
-compiled components; these are installed automaticaly via pip.
-
+recipe is necessary for Python modules which have no
+compiled components; these are installed automatically via pip.
 If you are new to building recipes, it is recommended that you first
 read all of this page, at least up to the Recipe reference
 documentation. The different recipe sections include a number of
@@ -42,7 +41,7 @@ The basic declaration of a recipe is as follows::
       patches = ['some_fix.patch']  # Paths relative to the recipe dir
 
       depends = ['kivy', 'sdl2']  # These are just examples
-      conflicts = ['pygame'] 
+      conflicts = ['generickndkbuild']
     
   recipe = YourRecipe()
 
@@ -62,21 +61,21 @@ when the recipe is imported.
 The actual build process takes place via three core methods::
 
       def prebuild_arch(self, arch):
-          super(YourRecipe, self).prebuild_arch(arch)
+          super().prebuild_arch(arch)
           # Do any pre-initialisation
 
       def build_arch(self, arch):
-          super(YourRecipe, self).build_arch(arch)
+          super().build_arch(arch)
           # Do the main recipe build
          
       def postbuild_arch(self, arch):
-          super(YourRecipe, self).build_arch(arch)
+          super().build_arch(arch)
           # Do any clearing up
 
 These methods are always run in the listed order; prebuild, then
 build, then postbuild.
 
-If you defined an url for your recipe, you do *not* need to manually
+If you defined a url for your recipe, you do *not* need to manually
 download it, this is handled automatically.
 
 The recipe will automatically be built in a special isolated build
@@ -87,9 +86,9 @@ context manager defined in toolchain.py::
 
   from pythonforandroid.toolchain import current_directory
   def build_arch(self, arch):
-      super(YourRecipe, self).build_arch(arch)
+      super().build_arch(arch)
       with current_directory(self.get_build_dir(arch.arch)):
-          with open('example_file.txt', 'w'):
+          with open('example_file.txt', 'w') as fileh:
               fileh.write('This is written to a file within the build dir')
   
 The argument to each method, ``arch``, is an object relating to the
@@ -179,7 +178,7 @@ environment for any processes that you call. It is convenient to do
 this using the ``sh`` module as follows::
 
   def build_arch(self, arch):
-      super(YourRecipe, self).build_arch(arch)
+      super().build_arch(arch)
       env = self.get_recipe_env(arch)
       sh.echo('$PATH', _env=env)  # Will print the PATH entry from the
                                   # env dict
@@ -192,12 +191,12 @@ its current status::
   shprint(sh.echo, '$PATH', _env=env)
 
 You can also override the ``get_recipe_env`` method to add new env
-vars for the use of your recipe. For instance, the Kivy recipe does
+vars for use in your recipe. For instance, the Kivy recipe does
 the following when compiling for SDL2, in order to tell Kivy what
 backend to use::
 
     def get_recipe_env(self, arch):
-        env = super(KivySDL2Recipe, self).get_recipe_env(arch)
+        env = super().get_recipe_env(arch)
         env['USE_SDL2'] = '1'
 
         env['KIVY_SDL2_PATH'] = ':'.join([
@@ -252,12 +251,12 @@ install`` with an appropriate environment.
 For instance, the following is all that's necessary to create a recipe
 for the Vispy module::
 
-  from pythonforandroid.toolchain import PythonRecipe
+  from pythonforandroid.recipe import PythonRecipe
   class VispyRecipe(PythonRecipe):
       version = 'master'
       url = 'https://github.com/vispy/vispy/archive/{version}.zip'
 
-      depends = ['python2', 'numpy']
+      depends = ['python3', 'numpy']
       
       site_packages_name = 'vispy'
 
@@ -273,7 +272,7 @@ Python installation.
 For reference, the code that accomplishes this is the following::
 
     def build_arch(self, arch):
-        super(PythonRecipe, self).build_arch(arch)
+        super().build_arch(arch)
         self.install_python_package()
 
     def install_python_package(self):
@@ -307,14 +306,14 @@ the cython components and to install the Python module just like a
 normal PythonRecipe.
 
 For instance, the following is all that's necessary to make a recipe
-for Kivy (in this case, depending on Pygame rather than SDL2)::
+for Kivy::
 
   class KivyRecipe(CythonRecipe):
-       version = 'stable'
-       url = 'https://github.com/kivy/kivy/archive/{version}.zip'
-       name = 'kivy'
+      version = 'stable'
+      url = 'https://github.com/kivy/kivy/archive/{version}.zip'
+      name = 'kivy'
 
-       depends = ['pygame', 'pyjnius', 'android']
+      depends = ['sdl2', 'pyjnius']
 
   recipe = KivyRecipe()
   
@@ -350,12 +349,12 @@ For reference, the code that accomplishes this is the following::
             shprint(sh.find, build_lib[0], '-name', '*.o', '-exec',
                     env['STRIP'], '{}', ';', _env=env)
 
-The failing build and manual cythonisation is necessary, first to
+The failing build and manual cythonisation is necessary, firstly to
 make sure that any .pyx files have been generated by setup.py, and
-second because cython isn't installed in the hostpython build.
+secondly because cython isn't installed in the hostpython build.
 
 This may actually fail if the setup.py tries to import cython before
-making any pyx files (in which case it crashes too early), although
+making any .pyx files (in which case it crashes too early), although
 this is probably not usually an issue. If this happens to you, try
 patching to remove this import or make it fail quietly.
  
@@ -377,7 +376,7 @@ Using an NDKRecipe
 ------------------
 
 If you are writing a recipe not for a Python module but for something
-that would normall go in the JNI dir of an Android project (i.e. it
+that would normally go in the JNI dir of an Android project (i.e. it
 has an ``Application.mk`` and ``Android.mk`` that the Android build
 system can use), you can use an NDKRecipe to automatically set it
 up. The NDKRecipe overrides the normal ``get_build_dir`` method to
@@ -427,7 +426,7 @@ overrides if you do not use them::
         url = 'http://example.com/example-{version}.tar.gz'
         # {version} will be replaced with self.version when downloading
 
-        depends = ['python2', 'numpy']  # A list of any other recipe names
+        depends = ['python3', 'numpy']  # A list of any other recipe names
                                         # that must be built before this
                                         # one
 
@@ -435,29 +434,29 @@ overrides if you do not use them::
                         # alongside this one
 
         def get_recipe_env(self, arch):
-            env = super(YourRecipe, self).get_recipe_env()
+            env = super().get_recipe_env(arch)
             # Manipulate the env here if you want
             return env
 
-        def should_build(self):
+        def should_build(self, arch):
             # Add a check for whether the recipe is already built if you
             # want, and return False if it is.
             return True
 
         def prebuild_arch(self, arch):
-            super(YourRecipe, self).prebuild_arch(self)
+            super().prebuild_arch(self)
             # Do any extra prebuilding you want, e.g.:
             self.apply_patch('path/to/patch.patch')
 
         def build_arch(self, arch):
-            super(YourRecipe, self).build_arch(self)
+            super().build_arch(self)
             # Build the code. Make sure to use the right build dir, e.g.
             with current_directory(self.get_build_dir(arch.arch)):
                 sh.ls('-lathr')  # Or run some commands that actually do
                                  # something
 
         def postbuild_arch(self, arch):
-            super(YourRecipe, self).prebuild_arch(self)
+            super().prebuild_arch(self)
             # Do anything you want after the build, e.g. deleting
             # unnecessary files such as documentation
 

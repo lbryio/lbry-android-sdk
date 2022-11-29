@@ -1,22 +1,18 @@
 from pythonforandroid.recipe import Recipe
-from pythonforandroid.toolchain import shprint, shutil, current_directory
-from os.path import exists, join
+from pythonforandroid.util import current_directory
+from pythonforandroid.logger import shprint
+from os.path import exists
 import sh
 
 
 class Libxml2Recipe(Recipe):
-    version = '2.9.8'
+    version = '2.9.12'
     url = 'http://xmlsoft.org/sources/libxml2-{version}.tar.gz'
     depends = []
     patches = ['add-glob.c.patch']
-
-    def should_build(self, arch):
-        super(Libxml2Recipe, self).should_build(arch)
-        return not exists(
-            join(self.get_build_dir(arch.arch), '.libs', 'libxml2.a'))
+    built_libraries = {'libxml2.a': '.libs'}
 
     def build_arch(self, arch):
-        super(Libxml2Recipe, self).build_arch(arch)
         env = self.get_recipe_env(arch)
         with current_directory(self.get_build_dir(arch.arch)):
 
@@ -46,11 +42,8 @@ class Libxml2Recipe(Recipe):
             # we'll need the glob dependency which is a big headache
             shprint(sh.make, "libxml2.la", _env=env)
 
-            shutil.copyfile('.libs/libxml2.a',
-                            join(self.ctx.libs_dir, 'libxml2.a'))
-
     def get_recipe_env(self, arch):
-        env = super(Libxml2Recipe, self).get_recipe_env(arch)
+        env = super().get_recipe_env(arch)
         env['CONFIG_SHELL'] = '/bin/bash'
         env['SHELL'] = '/bin/bash'
         env['CC'] += ' -I' + self.get_build_dir(arch.arch)

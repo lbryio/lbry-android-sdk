@@ -13,7 +13,7 @@ EXCLUDE_EXTS = (".py", ".pyc", ".so.o", ".so.a", ".so.libs", ".pyx")
 class LbryBootstrap(Bootstrap):
     name = 'lbry'
 
-    recipe_depends = ['genericndkbuild', ('python2', 'python3crystax')]
+    recipe_depends = ['genericndkbuild', ('python3', 'python3crystax')]
 
     def run_distribute(self):
         info_main("# Creating Android project ({})".format(self.name))

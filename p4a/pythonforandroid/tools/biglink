@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 import os
 import sys
 import subprocess
 
-sofiles = [ ]
+sofiles = []
 
 for directory in sys.argv[2:]:
 
@@ -20,7 +19,7 @@ for directory in sys.argv[2:]:
         sofiles.append(fn[:-2])
 
 # The raw argument list.
-args = [ ]
+args = []
 
 for fn in sofiles:
     afn = fn + ".o"
@@ -31,7 +30,7 @@ for fn in sofiles:
         data = fd.read()
         args.extend(data.split(" "))
 
-unique_args = [ ]
+unique_args = []
 while args:
     a = args.pop()
     if a in ('-L', ):
