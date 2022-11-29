@@ -3,6 +3,7 @@
 .gradle
 app/node_modules/
 bin
+venv
 buildozer.spec
 build.log
 recipes/**/*.pyc

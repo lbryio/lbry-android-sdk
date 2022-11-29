@@ -36,13 +36,6 @@ Alternatively, the JDK available from http://www.oracle.com/technetwork/java/jav
 sudo -H pip install --upgrade cython==0.28.1 setuptools
 ```
 
-#### Install buildozer
-A forked version of `buildozer` needs to be installed in order to copy the React Native UI source files into the corresponding directories.
-```
-git clone https://github.com/lbryio/buildozer.git
-cd buildozer && python2.7 setup.py install && cd ..
-```
-
 #### Create buildozer.spec
 Assuming `lbry-android` as the current working folder:
 * Copy `buildozer.spec.sample` to `buildozer.spec` in the `lbry-android` folder. Running `buildozer init` instead will create a new `buildozer.spec` file.

@@ -2,7 +2,7 @@ name: Publish Assets
 
 on:
   push: 
-    branches: [master]
+    branches: [master, test-112-deps-2]
 
 jobs:
   build_arm64_aar:
