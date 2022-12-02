@@ -8,7 +8,7 @@ class CffiRecipe(CompiledComponentsPythonRecipe):
     version = '1.14.6'
     url = 'https://pypi.python.org/packages/source/c/cffi/cffi-{version}.tar.gz'
 
-    depends = [('python2', 'python3crystax'), 'setuptools', 'pycparser', 'libffi']
+    depends = [('python2', 'python3'), 'setuptools', 'pycparser', 'libffi']
 
     patches = ['disable-pkg-config.patch']
 
@@ -43,16 +43,16 @@ class CffiRecipe(CompiledComponentsPythonRecipe):
             self.ctx.get_site_packages_dir(),
             env['BUILDLIB_PATH'],
         ])
-        if self.ctx.ndk == 'crystax':
-            # only keeps major.minor (discards patch)
-            python_version = self.ctx.python_recipe.version[0:3]
-            ndk_dir_python = os.path.join(self.ctx.ndk_dir, 'sources/python/', python_version)
-            env['LDFLAGS'] += ' -L{}'.format(os.path.join(ndk_dir_python, 'libs', arch.arch))
-            env['LDFLAGS'] += ' -lpython{}'.format(python_version)
-            # until `pythonforandroid/archs.py` gets merged upstream:
-            # https://github.com/kivy/python-for-android/pull/1250/files#diff-569e13021e33ced8b54385f55b49cbe6
-            env['CFLAGS'] += ' -I{}/include/python/'.format(ndk_dir_python)
-        return env
+        # if self.ctx.ndk == 'crystax':
+        #     # only keeps major.minor (discards patch)
+        #     python_version = self.ctx.python_recipe.version[0:3]
+        #     ndk_dir_python = os.path.join(self.ctx.ndk_dir, 'sources/python/', python_version)
+        #     env['LDFLAGS'] += ' -L{}'.format(os.path.join(ndk_dir_python, 'libs', arch.arch))
+        #     env['LDFLAGS'] += ' -lpython{}'.format(python_version)
+        #     # until `pythonforandroid/archs.py` gets merged upstream:
+        #     # https://github.com/kivy/python-for-android/pull/1250/files#diff-569e13021e33ced8b54385f55b49cbe6
+        #     env['CFLAGS'] += ' -I{}/include/python/'.format(ndk_dir_python)
+        # return env
 
 
 recipe = CffiRecipe()

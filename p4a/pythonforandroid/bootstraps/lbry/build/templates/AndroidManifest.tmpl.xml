@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:tools="http://schemas.android.com/tools"
+      package="{{ args.package }}"
+      android:versionCode="{{ args.numeric_version }}"
+      android:versionName="{{ args.version }}">
+
+    <!-- Android 2.3.3 -->
+    <uses-sdk android:minSdkVersion="{{ args.min_sdk_version }}" android:targetSdkVersion="{{ android_api }}" />
+    <application>
+        <service android:name="{{ args.package }}.LbrynetService"
+				 android:process=":service_lbrynet"
+                 android:exported="true" />
+    </application>
+</manifest>

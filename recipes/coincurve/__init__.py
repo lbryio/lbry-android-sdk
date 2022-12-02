@@ -6,7 +6,7 @@ class CoincurveRecipe(CompiledComponentsPythonRecipe):
     version = '7.1.0'
     url = 'https://github.com/ofek/coincurve/archive/{version}.tar.gz'
     call_hostpython_via_targetpython = False
-    depends = [('python2', 'python3crystax'), 'setuptools',
+    depends = [('python3',), 'setuptools',
         'libffi', 'cffi', 'libsecp256k1']
     patches = [
         "cross_compile.patch", "drop_setup_requires.patch",
