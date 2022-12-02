@@ -6,14 +6,14 @@ from pythonforandroid.logger import (info, shprint)
 
 
 class ReportLabRecipe(CompiledComponentsPythonRecipe):
-    version = 'c088826211ca'
-    url = 'https://bitbucket.org/rptlab/reportlab/get/{version}.tar.gz'
+    version = 'fe660f227cac'
+    url = 'https://hg.reportlab.com/hg-public/reportlab/archive/{version}.tar.gz'
     depends = ['freetype']
     call_hostpython_via_targetpython = False
 
     def prebuild_arch(self, arch):
         if not self.is_patched(arch):
-            super(ReportLabRecipe, self).prebuild_arch(arch)
+            super().prebuild_arch(arch)
             recipe_dir = self.get_build_dir(arch.arch)
 
             # Some versions of reportlab ship with a GPL-licensed font.
@@ -22,9 +22,9 @@ class ReportLabRecipe(CompiledComponentsPythonRecipe):
             font_dir = os.path.join(recipe_dir,
                                     "src", "reportlab", "fonts")
             if os.path.exists(font_dir):
-                for l in os.listdir(font_dir):
-                    if l.lower().startswith('darkgarden'):
-                        os.remove(os.path.join(font_dir, l))
+                for file in os.listdir(font_dir):
+                    if file.lower().startswith('darkgarden'):
+                        os.remove(os.path.join(font_dir, file))
 
             # Apply patches:
             self.apply_patch('patches/fix-setup.patch', arch.arch)

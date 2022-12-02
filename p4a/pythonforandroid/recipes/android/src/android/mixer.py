@@ -93,7 +93,9 @@ def find_channel(force=False):
     if not force:
         return None
 
-    return min(busy, key=lambda x: x.play_time)
+    busy.sort(key=lambda x: x.play_time)
+
+    return busy[0]
 
 
 class ChannelImpl(object):
