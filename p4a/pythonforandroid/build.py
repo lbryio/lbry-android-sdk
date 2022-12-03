@@ -711,7 +711,7 @@ def run_pymodules_install(ctx, arch, modules, project_dir=None,
         # Install Cython in case modules need it to build:
         info('Install Cython in case one of the modules needs it to build')
         shprint(sh.bash, '-c', (
-            "venv/bin/pip install Cython"
+            "venv/bin/pip install --upgrade Cython"
         ), _env=copy.copy(base_env))
 
         # Get environment variables for build (with CC/compiler set):
