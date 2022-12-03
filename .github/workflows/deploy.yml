@@ -20,8 +20,8 @@ jobs:
           echo "NEXUS_SIGNING_KEYRING_FILE=$GITHUB_WORKSPACE/signing2.pgp" >> $GITHUB_ENV
           echo "BUILD_VERSION=${B_VERSION}" >> $GITHUB_ENV
           export PATH=/usr/bin:$PATH
-          wget -q 'https://dl.google.com/android/repository/android-ndk-r23c-linux.zip' -P ~/.buildozer/android/
-          unzip ~/.buildozer/android/android-ndk-r23c-linux.zip -d ~/.buildozer/android/
+          wget -q 'https://dl.google.com/android/repository/android-ndk-r25b-linux.zip' -P ~/.buildozer/android/
+          unzip ~/.buildozer/android/android-ndk-r25b-linux.zip -d ~/.buildozer/android/
           mv buildozer.spec.arm64.ci buildozer.spec
           chmod u+x ./build-release.sh
       - name: build release

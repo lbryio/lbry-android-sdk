@@ -101,14 +101,14 @@ android.minapi = 21
 android.sdk = 23
 
 # (str) Android NDK version to use
-android.ndk = 23c
+android.ndk = 25b
 
 # (bool) Use --private data storage (True) or --dir public storage (False)
 #android.private_storage = True
 
 # (str) Android NDK directory (if empty, it will be automatically downloaded.)
 # android.ndk_path = ~/.buildozer/android/crystax-ndk-10.3.2
-android.ndk_path = ~/.buildozer/android/android-ndk-r23c
+android.ndk_path = ~/.buildozer/android/android-ndk-r25b
 
 
 # (str) Android SDK directory (if empty, it will be automatically downloaded.)
