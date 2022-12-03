@@ -18,7 +18,7 @@ class LbryBootstrap(Bootstrap):
         info_main("# Creating Android project ({})".format(self.name))
 
         arch = self.ctx.archs[0]
-        python_install_dir = self.ctx.get_python_install_dir()
+        python_install_dir = self.ctx.get_python_install_dir(arch.arch)
         #from_crystax = self.ctx.python_recipe.from_crystax
         #crystax_python_dir = join("crystax_python", "crystax_python")
 
