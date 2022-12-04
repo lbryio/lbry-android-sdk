@@ -1,8 +1,8 @@
 diff --git a/setup.py b/setup.py
-index f0d3ab3..1d81b43 100644
+index c224fb2..d5f6d1a 100644
 --- a/setup.py
 +++ b/setup.py
-@@ -47,6 +47,8 @@ if [int(i) for i in setuptools_version.split('.', 2)[:2]] < [3, 3]:
+@@ -51,6 +51,8 @@ if [int(i) for i in setuptools_version.split('.', 2)[:2]] < [3, 3]:
  
  
  def download_library(command):

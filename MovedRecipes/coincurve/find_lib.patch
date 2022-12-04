@@ -1,13 +1,13 @@
 diff --git a/setup_support.py b/setup_support.py
-index fcd1d9d..0ac3bc0 100644
+index e7a4f2e..72f0c4d 100644
 --- a/setup_support.py
 +++ b/setup_support.py
-@@ -60,6 +60,8 @@ def build_flags(library, type_, path):
-
-
+@@ -68,6 +69,8 @@ def build_flags(library, type_, path):
+ 
+ 
  def _find_lib():
 +    # we're picking up the recipe one
 +    return True
-     if 'COINCURVE_IGNORE_SYSTEM_LIB' in os.environ:
-         return False
-
+     from cffi import FFI
+     ffi = FFI()
+     try:
