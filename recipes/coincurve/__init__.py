@@ -64,7 +64,7 @@ class CoincurveRecipe(CompiledComponentsPythonRecipe):
         #     # https://github.com/kivy/python-for-android/pull/1250/files#diff-569e13021e33ced8b54385f55b49cbe6
         #     env['CFLAGS'] += ' -I{}/include/python/'.format(ndk_dir_python)
         # else:
-        env['PYTHON_ROOT'] = self.ctx.get_python_install_dir()
+        env['PYTHON_ROOT'] = self.ctx.get_python_install_dir(arch.arch)
         env['CFLAGS'] += ' -I' + env['PYTHON_ROOT'] + '/include/python{}'.format(python_version)
         env['LDFLAGS'] += " -lpython{}".format(python_version)
         env['LDFLAGS'] += " -lsecp256k1"
