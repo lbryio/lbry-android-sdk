@@ -36,8 +36,8 @@ class CoincurveRecipe(CompiledComponentsPythonRecipe):
     #         env['LDFLAGS'] += " -lpython{}".format(python_version)
     #     env['LDFLAGS'] += " -lsecp256k1"
     #     return env
-    version = '15.0.0'
-    url = 'https://github.com/ofek/coincurve/archive/{version}.tar.gz'
+    version = 'v15.0.1'
+    url = 'https://github.com/ofek/coincurve/archive/refs/tags/v15.0.1.tar.gz'
     call_hostpython_via_targetpython = False
     depends = [('python2', 'python3'), 'setuptools',
                'libffi', 'cffi', 'libsecp256k1']
