@@ -3,7 +3,7 @@ from pythonforandroid.recipe import PythonRecipe, CompiledComponentsPythonRecipe
 
 
 class CoincurveRecipe(CompiledComponentsPythonRecipe):
-    # version = '7.1.0'
+    # version = '15.0.0'
     # url = 'https://github.com/ofek/coincurve/archive/{version}.tar.gz'
     # call_hostpython_via_targetpython = False
     # depends = ['setuptools',
@@ -36,7 +36,7 @@ class CoincurveRecipe(CompiledComponentsPythonRecipe):
     #         env['LDFLAGS'] += " -lpython{}".format(python_version)
     #     env['LDFLAGS'] += " -lsecp256k1"
     #     return env
-    version = '7.1.0'
+    version = '15.0.0'
     url = 'https://github.com/ofek/coincurve/archive/{version}.tar.gz'
     call_hostpython_via_targetpython = False
     depends = [('python2', 'python3'), 'setuptools',
