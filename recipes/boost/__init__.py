@@ -55,7 +55,6 @@ class BoostRecipe(Recipe):
                         '--arch=' + env['ARCH'],
                         '--platform=android-' + str(self.ctx.android_api),
                         '--toolchain=' + env['CROSSHOST'] + '-' + self.ctx.toolchain_version + ':-llvm',
-                        '--use-llvm',
                         '--stl=libc++',
                         '--install-dir=' + env['CROSSHOME']
                         )
