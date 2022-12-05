@@ -47,8 +47,8 @@ class BoostRecipe(Recipe):
     def prebuild_arch(self, arch):
         super(BoostRecipe, self).prebuild_arch(arch)
         env = self.get_recipe_env(arch)
-        print(env['CROSSHOST'])
-        print(env['CROSSHOME'])
+        shprint(bash, join('crosshost', env['CROSSHOST']))
+        shprint(bash, join('crosshome', env['CROSSHOME']))
         with current_directory(self.get_build_dir(arch.arch)):
             if not exists(env['CROSSHOME']):
                 # Make custom toolchain
