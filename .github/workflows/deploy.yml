@@ -2,7 +2,7 @@ name: Publish Assets
 
 on:
   push: 
-    branches: [master, update-deps-incremental]
+    branches: [master, update-deps-incremental+libtorrent]
 
 jobs:
   build_arm64_aar:
