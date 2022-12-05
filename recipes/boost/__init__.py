@@ -47,13 +47,13 @@ class BoostRecipe(Recipe):
     def prebuild_arch(self, arch):
         super(BoostRecipe, self).prebuild_arch(arch)
         env = self.get_recipe_env(arch)
-        shprint(bash, join('crosshost', env['CROSSHOST']))
-        shprint(bash, join('crosshome', env['CROSSHOME']))
+
         with current_directory(self.get_build_dir(arch.arch)):
             if not exists(env['CROSSHOME']):
                 # Make custom toolchain
                 bash = sh.Command('bash')
-
+                shprint(bash, join('crosshost', env['CROSSHOST']))
+                shprint(bash, join('crosshome', env['CROSSHOME']))
                 shprint(bash, join(self.ctx.ndk_dir, 'build/tools/make-standalone-toolchain.sh'),
                         '--arch=' + arch.arch,
                         '--platform=android-' + str(self.ctx.android_api),
