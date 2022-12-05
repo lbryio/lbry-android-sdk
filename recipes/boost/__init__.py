@@ -54,7 +54,6 @@ class BoostRecipe(Recipe):
                 shprint(bash, join(self.ctx.ndk_dir, 'build/tools/make-standalone-toolchain.sh'),
                         '--arch=' + env['ARCH'],
                         '--platform=android-' + str(self.ctx.android_api),
-                        '--toolchain=' + env['CROSSHOST'] + '-' + self.ctx.toolchain_version + ':-llvm',
                         '--stl=libc++',
                         '--install-dir=' + env['CROSSHOME']
                         )
