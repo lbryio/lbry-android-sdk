@@ -14,7 +14,7 @@ class LbryBootstrap(Bootstrap):
 
     recipe_depends = ['genericndkbuild', ('python2', 'python3')]
 
-    def run_distribute(self):
+    def assemble_distribution(self):
         info_main("# Creating Android project ({})".format(self.name))
 
         arch = self.ctx.archs[0]
@@ -127,7 +127,7 @@ class LbryBootstrap(Bootstrap):
 
         self.strip_libraries(arch)
         self.fry_eggs(site_packages_dir)
-        super(LbryBootstrap, self).run_distribute()
+        super().assemble_distribution()
 
 
 bootstrap = LbryBootstrap()
