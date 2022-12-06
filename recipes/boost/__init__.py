@@ -52,8 +52,8 @@ class BoostRecipe(Recipe):
             if not exists(env['CROSSHOME']):
                 # Make custom toolchain
                 bash = sh.Command('bash')
-                shprint(bash, join('crosshost', env['CROSSHOST']))
-                shprint(bash, join('crosshome', env['CROSSHOME']))
+                shprint(bash, join('echo crosshost', env['CROSSHOST']))
+                shprint(bash, join('echo crosshome', env['CROSSHOME']))
                 shprint(bash, join(self.ctx.ndk_dir, 'build/tools/make-standalone-toolchain.sh'),
                         '--arch=' + arch.arch,
                         '--platform=android-' + str(self.ctx.android_api),
