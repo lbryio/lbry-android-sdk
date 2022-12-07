@@ -12,7 +12,7 @@ EXCLUDE_EXTS = (".py", ".pyc", ".so.o", ".so.a", ".so.libs", ".pyx")
 class LbryBootstrap(Bootstrap):
     name = 'lbry'
 
-    recipe_depends = ['genericndkbuild', ('python2', 'python3')]
+    recipe_depends = ['genericndkbuild']
 
     def assemble_distribution(self):
         info_main("# Creating Android project ({})".format(self.name))
@@ -38,64 +38,69 @@ class LbryBootstrap(Bootstrap):
         with current_directory(self.dist_dir):
             info("Copying Python distribution")
 
-            if not exists("private"):
-                ensure_dir("private")
+            # if not exists("private"):
+            #     ensure_dir("private")
 
-            hostpython = sh.Command(self.ctx.hostpython)
+            # gethostpython?
+            # hostpython = sh.Command(self.ctx.hostpython)
             # if not from_crystax:
-            try:
-                shprint(hostpython, '-OO', '-m', 'compileall',
-                        python_install_dir,
-                        _tail=10, _filterout="^Listing")
-            except sh.ErrorReturnCode:
-                pass
-            if not exists('python-install'):
-                shprint(
-                    sh.cp, '-a', python_install_dir, './python-install')
+            # try:
+            #     shprint(hostpython, '-OO', '-m', 'compileall',
+            #             python_install_dir,
+            #             _tail=10, _filterout="^Listing")
+            # except sh.ErrorReturnCode:
+            #     pass
+            # if not exists('python-install'):
+            #     shprint(
+            #         sh.cp, '-a', python_install_dir, './python-install')
 
             self.distribute_libs(arch, [self.ctx.get_libs_dir(arch.arch)])
             self.distribute_javaclasses(self.ctx.javaclass_dir,
                                         dest_dir=join("src", "main", "java"))
 
+            python_bundle_dir = join(f'_python_bundle__{arch.arch}', '_python_bundle')
+            ensure_dir(python_bundle_dir)
+            site_packages_dir = self.ctx.python_recipe.create_python_bundle(
+                join(self.dist_dir, python_bundle_dir), arch)
+
             # if not from_crystax:
-            info("Filling private directory")
-            if not exists(join("private", "lib")):
-                info("private/lib does not exist, making")
-                shprint(sh.cp, "-a",
-                        join("python-install", "lib"), "private")
-            shprint(sh.mkdir, "-p",
-                    join("private", "include", "python2.7"))
+            # info("Filling private directory")
+            # if not exists(join("private", "lib")):
+            #     info("private/lib does not exist, making")
+            #     shprint(sh.cp, "-a",
+            #             join("python-install", "lib"), "private")
+            # shprint(sh.mkdir, "-p",
+            #         join("private", "include", "python2.7"))
 
-            libpymodules_fn = join("libs", arch.arch, "libpymodules.so")
-            if exists(libpymodules_fn):
-                shprint(sh.mv, libpymodules_fn, 'private/')
-            shprint(sh.cp,
-                    join('python-install', 'include',
-                         'python2.7', 'pyconfig.h'),
-                    join('private', 'include', 'python2.7/'))
+            # libpymodules_fn = join("libs", arch.arch, "libpymodules.so")
+            # if exists(libpymodules_fn):
+            #     shprint(sh.mv, libpymodules_fn, 'private/')
+            # shprint(sh.cp,
+            #         join('python-install', 'include',
+            #              'python2.7', 'pyconfig.h'),
+            #         join('private', 'include', 'python2.7/'))
+            #
+            # info('Removing some unwanted files')
+            # shprint(sh.rm, '-f', join('private', 'lib', 'libpython2.7.so'))
+            # shprint(sh.rm, '-rf', join('private', 'lib', 'pkgconfig'))
 
-            info('Removing some unwanted files')
-            shprint(sh.rm, '-f', join('private', 'lib', 'libpython2.7.so'))
-            shprint(sh.rm, '-rf', join('private', 'lib', 'pkgconfig'))
-
-            libdir = join(self.dist_dir, 'private', 'lib', 'python2.7')
-            site_packages_dir = join(libdir, 'site-packages')
-            with current_directory(libdir):
-                removes = []
-                for dirname, root, filenames in walk("."):
-                    for filename in filenames:
-                        for suffix in EXCLUDE_EXTS:
-                            if filename.endswith(suffix):
-                                removes.append(filename)
-                shprint(sh.rm, '-f', *removes)
-
-                info('Deleting some other stuff not used on android')
-                # To quote the original distribute.sh, 'well...'
-                shprint(sh.rm, '-rf', 'lib2to3')
-                shprint(sh.rm, '-rf', 'idlelib')
-                for filename in glob.glob('config/libpython*.a'):
-                    shprint(sh.rm, '-f', filename)
-                shprint(sh.rm, '-rf', 'config/python.o')
+            # libdir = join(self.dist_dir, 'private', 'lib', 'python2.7')
+            # with current_directory(libdir):
+            #     removes = []
+            #     for dirname, root, filenames in walk("."):
+            #         for filename in filenames:
+            #             for suffix in EXCLUDE_EXTS:
+            #                 if filename.endswith(suffix):
+            #                     removes.append(filename)
+            #     shprint(sh.rm, '-f', *removes)
+            #
+            #     info('Deleting some other stuff not used on android')
+            #     # To quote the original distribute.sh, 'well...'
+            #     shprint(sh.rm, '-rf', 'lib2to3')
+            #     shprint(sh.rm, '-rf', 'idlelib')
+            #     for filename in glob.glob('config/libpython*.a'):
+            #         shprint(sh.rm, '-f', filename)
+            #     shprint(sh.rm, '-rf', 'config/python.o')
 
             # else:  # Python *is* loaded from crystax
             #     ndk_dir = self.ctx.ndk_dir
