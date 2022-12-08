@@ -17,7 +17,7 @@ jobs:
       - name: setup
         run: |
           apt update
-          apt install libssl-dev -y
+          apt install libssl-dev zip unzip -y
           export B_VERSION=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
           echo "NEXUS_SIGNING_KEYRING_FILE=$GITHUB_WORKSPACE/signing2.pgp" >> $GITHUB_ENV
           echo "BUILD_VERSION=${B_VERSION}" >> $GITHUB_ENV
