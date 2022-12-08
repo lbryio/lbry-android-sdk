@@ -23,7 +23,7 @@ else:
     # don't use sh after 1.12.5, we have performance issues
     # https://github.com/amoffat/sh/issues/378
     install_reqs = ['appdirs', 'colorama>=0.3.3', 'sh>=1.10,<1.12.5', 'jinja2',
-                        'six']
+                        'six', 'enum34']
 
 # By specifying every file manually, package_data will be able to
 # include them in binary distributions. Note that we have to add
@@ -54,13 +54,17 @@ recursively_include(package_data, 'pythonforandroid/bootstraps/webview',
 recursively_include(package_data, 'pythonforandroid',
                     ['liblink', 'biglink', 'liblink.sh'])
 
-with open(join(dirname(__file__), 'README.rst')) as fileh:
+with open(join(dirname(__file__), 'README.md',
+               encoding="utf-8",
+               errors="replace")) as fileh:
     long_description = fileh.read()
 
 init_filen = join(dirname(__file__), 'pythonforandroid', '__init__.py')
 version = None
 try:
-    with open(init_filen) as fileh:
+    with open(init_filen,
+              encoding="utf-8",
+              errors="replace") as fileh:
         lines = fileh.readlines()
 except IOError:
     pass
