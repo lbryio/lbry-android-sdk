@@ -15,15 +15,15 @@ package_data = {'': ['*.tmpl',
 
 data_files = []
 
-
-if os.name == 'nt':
-    install_reqs = ['appdirs', 'colorama>=0.3.3', 'jinja2',
-                        'six']
-else:
+#
+# if os.name == 'nt':
+#     install_reqs = ['appdirs', 'colorama>=0.3.3', 'jinja2',
+#                         'six']
+# else:
     # don't use sh after 1.12.5, we have performance issues
     # https://github.com/amoffat/sh/issues/378
-    install_reqs = ['appdirs', 'colorama>=0.3.3', 'sh>=1.10,<1.12.5', 'jinja2',
-                        'six', 'enum34']
+install_reqs = ['appdirs', 'colorama>=0.3.3', 'sh>=1.10,<1.12.5', 'jinja2',
+                    'six', 'enum34']
 
 # By specifying every file manually, package_data will be able to
 # include them in binary distributions. Note that we have to add
@@ -90,15 +90,17 @@ setup(name='python-for-android',
       install_requires=install_reqs,
       entry_points={
           'console_scripts': [
-              'python-for-android = pythonforandroid.toolchain:main',
-              'p4a = pythonforandroid.toolchain:main',
-              ],
+              'python-for-android = pythonforandroid.entrypoints:main',
+              'p4a = pythonforandroid.entrypoints:main',
+          ],
           'distutils.commands': [
               'apk = pythonforandroid.bdistapk:BdistAPK',
-              ],
-          },
-      classifiers = [
-          'Development Status :: 4 - Beta',
+              'aar = pythonforandroid.bdistapk:BdistAAR',
+              'aab = pythonforandroid.bdistapk:BdistAAB',
+          ],
+      },
+      classifiers=[
+          'Development Status :: 5 - Production/Stable',
           'Intended Audience :: Developers',
           'License :: OSI Approved :: MIT License',
           'Operating System :: Microsoft :: Windows',
@@ -107,11 +109,14 @@ setup(name='python-for-android',
           'Operating System :: MacOS :: MacOS X',
           'Operating System :: Android',
           'Programming Language :: C',
-          'Programming Language :: Python :: 2',
           'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 3.7',
+          'Programming Language :: Python :: 3.8',
+          'Programming Language :: Python :: 3.9',
+          'Programming Language :: Python :: 3.10',
           'Topic :: Software Development',
           'Topic :: Utilities',
-          ],
+      ],
       packages=packages,
       package_data=package_data,
       )
