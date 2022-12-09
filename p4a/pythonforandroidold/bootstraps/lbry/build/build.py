@@ -611,6 +611,10 @@ tools directory of the Android SDK.
                     default=join(curdir, 'whitelist.txt'),
                     help=('Use a whitelist file to prevent blacklisting of '
                           'file in the final APK'))
+    ap.add_argument('--release', dest='build_mode', action='store_const',
+                    const='release', default='debug',
+                    help='Build your app as a non-debug release build. '
+                         '(Disables gdb debugging among other things)')
     ap.add_argument('--add-jar', dest='add_jar', action='append',
                     help=('Add a Java .jar to the libs, so you can access its '
                           'classes with pyjnius. You can specify this '
