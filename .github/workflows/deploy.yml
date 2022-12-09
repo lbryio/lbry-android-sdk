@@ -2,7 +2,7 @@ name: Publish Assets
 
 on:
   push: 
-    branches: [master]
+    branches: [master, upgrade_p4a]
 
 jobs:
   build_arm64_aar:
@@ -16,20 +16,14 @@ jobs:
           cp -r /root/.buildozer ~/.buildozer/
       - name: setup
         run: |
+          apt update
+          apt install libssl-dev zip unzip openjdk-11-jdk -y
           export B_VERSION=$(cat $GITHUB_WORKSPACE/src/main/python/main.py | grep --color=never -oP '([0-9]+\.?)+')
           echo "NEXUS_SIGNING_KEYRING_FILE=$GITHUB_WORKSPACE/signing2.pgp" >> $GITHUB_ENV
           echo "BUILD_VERSION=${B_VERSION}" >> $GITHUB_ENV
           export PATH=/usr/bin:$PATH
-          wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.buildozer/android/
-          tar -xf ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz -C ~/.buildozer/android/
-          rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
-          ln -s ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21 ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
-          cp -f $GITHUB_WORKSPACE/scripts/build-target-python.sh ~/.buildozer/android/crystax-ndk-10.3.2/build/tools/build-target-python.sh
-          cp -f $GITHUB_WORKSPACE/scripts/mangled-glibc-syscalls__arm64.h ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21/arch-arm64/usr/include/crystax/bionic/libc/include/sys/mangled-glibc-syscalls.h
-          cp -f $GITHUB_WORKSPACE/scripts/build-binary.mk ~/.buildozer/android/crystax-ndk-10.3.2/build/core/build-binary.mk
-          rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
-          cp -Rf $GITHUB_WORKSPACE/scripts/crystax-sources/sqlite ~/.buildozer/android/crystax-ndk-10.3.2/sources/sqlite
-          rm ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz
+          wget -q 'https://dl.google.com/android/repository/android-ndk-r25b-linux.zip' -P ~/.buildozer/android/
+          unzip ~/.buildozer/android/android-ndk-r25b-linux.zip -d ~/.buildozer/android/
           mv buildozer.spec.arm64.ci buildozer.spec
           chmod u+x ./build-release.sh
       - name: build release
@@ -77,6 +71,7 @@ jobs:
           echo "NEXUS_SIGNING_KEYRING_FILE=$GITHUB_WORKSPACE/signing2.pgp" >> $GITHUB_ENV
           export PATH=/usr/bin:$PATH
           wget -q 'https://eu.crystax.net/download/crystax-ndk-10.3.2-linux-x86_64.tar.xz' -P ~/.buildozer/android/
+          unzip ~/
           tar -xf ~/.buildozer/android/crystax-ndk-10.3.2-linux-x86_64.tar.xz -C ~/.buildozer/android/
           rm -rf ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9
           ln -s ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-21 ~/.buildozer/android/crystax-ndk-10.3.2/platforms/android-9

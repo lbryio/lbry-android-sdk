@@ -237,7 +237,7 @@ main.py that loads it.''')
     # Delete the old assets.
     shutil.rmtree(assets_dir, ignore_errors=True)
     ensure_dir(assets_dir)
-
+    # remove make_python_zip()
     # Add extra environment variable file into tar-able directory:
     env_vars_tarpath = tempfile.mkdtemp(prefix="p4a-extra-env-")
     with open(os.path.join(env_vars_tarpath, "p4a_env_vars.txt"), "w") as f:
@@ -251,7 +251,7 @@ main.py that loads it.''')
     # Package up the private data (public not supported).
     use_setup_py = get_dist_info_for("use_setup_py",
                                      error_if_missing=False) is True
-    private_tar_dirs = [env_vars_tarpath]
+    tar_dirs = [env_vars_tarpath]
     _temp_dirs_to_clean = []
     try:
         if args.private:
@@ -261,12 +261,21 @@ main.py that loads it.''')
                     ):
                 print('No setup.py/pyproject.toml used, copying '
                       'full private data into .apk.')
-                private_tar_dirs.append(args.private)
+                tar_dirs.append(args.private)
             else:
                 print("Copying main.py's ONLY, since other app data is "
                       "expected in site-packages.")
                 main_py_only_dir = tempfile.mkdtemp()
                 _temp_dirs_to_clean.append(main_py_only_dir)
+
+                # skip this:
+                # if exists(join(args.private, "main.pyo")):
+                #     shutil.copyfile(join(args.private, "main.pyo"),
+                #             join(main_py_only_dir, "main.pyo"))
+                # elif exists(join(args.private, "main.py")):
+                #     shutil.copyfile(join(args.private, "main.py"),
+                #             join(main_py_only_dir, "main.py"))
+                #     tar_dirs.append(main_py_only_dir)
 
                 # Check all main.py files we need to copy:
                 copy_paths = ["main.py", join("service", "main.py")]
@@ -292,10 +301,10 @@ main.py that loads it.''')
                             )
 
                 # Append directory with all main.py's to result apk paths:
-                private_tar_dirs.append(main_py_only_dir)
-        if get_bootstrap_name() == "webview":
-            for asset in listdir('webview_includes'):
-                shutil.copy(join('webview_includes', asset), join(assets_dir, asset))
+                tar_dirs.append(main_py_only_dir)
+        # if get_bootstrap_name() == "webview":
+        #     for asset in listdir('webview_includes'):
+        #         shutil.copy(join('webview_includes', asset), join(assets_dir, asset))
 
         for asset in args.assets:
             asset_src, asset_dest = asset.split(":")
@@ -316,7 +325,7 @@ main.py that loads it.''')
                 )
             make_tar(
                 join(assets_dir, "private.tar"),
-                private_tar_dirs,
+                tar_dirs,
                 byte_compile_python=args.byte_compile_python,
                 optimize_python=args.optimize_python,
             )

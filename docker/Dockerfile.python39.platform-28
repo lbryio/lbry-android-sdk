@@ -24,6 +24,7 @@ RUN wget 'https://dl.google.com/android/android-sdk_r23-linux.tgz' -P ~/.buildoz
 RUN tar -xvf ~/.buildozer/android/platform/android-sdk_r23-linux.tgz -C ~/.buildozer/android/platform/ && \
     mv ~/.buildozer/android/platform/android-sdk-linux ~/.buildozer/android/platform/android-sdk && \
     unzip ~/.buildozer/android/platform/platform-28_r06.zip -d ~/.buildozer/android/platform/android-sdk/platforms && \
+    # android 9 (pie) comes with api level 28.
     mv ~/.buildozer/android/platform/android-sdk/platforms/android-9 ~/.buildozer/android/platform/android-sdk/platforms/android-28 && \
     mkdir -p ~/.buildozer/android/platform/android-sdk/build-tools && \
     unzip ~/.buildozer/android/platform/build-tools_r28.0.3-linux.zip -d ~/.buildozer/android/platform/android-sdk/build-tools && \
@@ -45,3 +46,10 @@ RUN git clone https://github.com/lbryio/buildozer.git
 RUN cd buildozer && python setup.py install && cd ..
 
 CMD ["/bin/bash"]
+
+# result is
+# ./root/.buildozer/android/platform/android-sdk/[build-tools,cmdline-tools,licenses,platforms,tools]
+# ...build-tools/28.0.3/
+# ...cmdline-tools/5.0/[bin,lib,source.properties]
+# ...platforms/android-28/[]
+# ...tools/[]

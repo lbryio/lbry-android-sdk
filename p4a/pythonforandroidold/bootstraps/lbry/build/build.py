@@ -10,6 +10,7 @@ import tarfile
 import time
 import subprocess
 import shutil
+import json
 from zipfile import ZipFile
 import sys
 from distutils.version import LooseVersion
@@ -18,12 +19,58 @@ from fnmatch import fnmatch
 
 import jinja2
 
+## WHAT IS DISTINFO>JSON?
+def get_dist_info_for(key):
+    try:
+        with open(join(dirname(__file__), 'dist_info.json'), 'r') as fileh:
+            info = json.load(fileh)
+        bootstrap = str(info["bootstrap"])
+        value = str(info[key])
+    except (OSError, KeyError) as e:
+        print("BUILD FAILURE: Couldn't extract bootstrap name " +
+              print("BUILD FAILURE: Couldn't extract the key `" + key + "` " +
+                    "from dist_info.json: " + str(e))
+        sys.exit(1)
+    return bootstrap
+    return value
+
+
+def get_hostpython():
+    return get_dist_info_for('hostpython')
+
+def get_python_version():
+    return get_dist_info_for('python_version')
+
+
+def get_bootstrap_name():
+    return get_dist_info_for('python_version')
+
+def get_bootstrap_name():
+    # try:
+    #     with open(join(dirname(__file__), 'dist_info.json'), 'r') as fileh:
+    #         info = json.load(fileh)
+    #     bootstrap = str(info["bootstrap"])
+    # except (OSError, KeyError) as e:
+    #     print("BUILD FAILURE: Couldn't extract bootstrap name " +
+    #           "from dist_info.json: " + str(e))
+    #     sys.exit(1)
+    # return bootstrap
+    return get_dist_info_for('bootstrap')
+
+
+if os.name == 'nt':
+    ANDROID = 'android.bat'
+    ANT = 'ant.bat'
+else:
+    ANDROID = 'android'
+    ANT = 'ant'
+
 curdir = dirname(__file__)
 
 # Try to find a host version of Python that matches our ARM version.
-PYTHON = join(curdir, 'python-install', 'bin', 'python.host')
+# PYTHON = join(curdir, 'python-install', 'bin', 'python.host')
+PYTHON = get_python_version()
 if not exists(PYTHON):
-    print('Could not find hostpython, will not compile to .pyo (this is normal with python3)')
     PYTHON = None
 
 BLACKLIST_PATTERNS = [
@@ -125,7 +172,6 @@ def make_python_zip():
 
     if not exists('private'):
         print('No compiled python is present to zip, skipping.')
-        print('this should only be the case if you are using the CrystaX python')
         return
 
     global python_files
@@ -158,7 +204,7 @@ def make_python_zip():
     zf.close()
 
 
-def make_tar(tfn, source_dirs, ignore_path=[]):
+def make_tar(tfn, source_dirs, ignore_path=[], optimize_python=True):
     '''
     Make a zip file `fn` from the contents of source_dis.
     '''
@@ -179,7 +225,7 @@ def make_tar(tfn, source_dirs, ignore_path=[]):
     files = []
     for sd in source_dirs:
         sd = realpath(sd)
-        compile_dir(sd)
+        compile_dir(sd, optimize_python=optimize_python)
         files += [(x, relpath(realpath(x), sd)) for x in listfiles(sd)
                   if select(x)]
 
@@ -208,18 +254,27 @@ def make_tar(tfn, source_dirs, ignore_path=[]):
     tf.close()
 
 
-def compile_dir(dfn):
+def compile_dir(dfn, optimize_python=True):
     '''
     Compile *.py in directory `dfn` to *.pyo
     '''
     # -OO = strip docstrings
     if PYTHON is None:
         return
-    subprocess.call([PYTHON, '-OO', '-m', 'compileall', '-f', dfn])
-
+    args = [PYTHON, '-m', 'compileall', '-b', '-f', dfn]
+    if optimize_python:
+        # -OO = strip docstrings
+        args.insert(1, '-OO')
+    return_code = subprocess.call(args)
+    if return_code != 0:
+        print('Error while running "{}"'.format(' '.join(args)))
+        print('This probably means one of your Python files has a syntax '
+              'error, see logs above')
+        exit(1)
 
 def make_package(args):
     # Ignore warning if the launcher is in args
+    # since boostrap is 'lbry', removed get_bootstrap_name checks
     if not args.launcher:
         if not (exists(join(realpath(args.private), 'main.py')) or
                 exists(join(realpath(args.private), 'main.pyo'))):
@@ -229,20 +284,23 @@ started by a file with a different name, rename it to main.py or add a
 main.py that loads it.''')
             exit(1)
 
+    assets_dir = "src/main/assets"
+
     # Delete the old assets.
-    try_unlink('src/main/assets/public.mp3')
-    try_unlink('src/main/assets/private.mp3')
+    try_unlink(join(assets_dir, 'public.mp3'))
+    try_unlink(join(assets_dir, 'private.mp3'))
+    ensure_dir(assets_dir)
 
     # In order to speedup import and initial depack,
     # construct a python27.zip
+    # still here as of 12/18/18
     make_python_zip()
 
     # Package up the private data (public not supported).
     tar_dirs = [args.private]
-    if exists('private'):
-        tar_dirs.append('private')
-    if exists('crystax_python'):
-        tar_dirs.append('crystax_python')
+    for python_bundle_dir in ('private', 'crystax_python', '_python_bundle'):
+        if exists(python_bundle_dir):
+            tar_dirs.append(python_bundle_dir)
 
     if args.private:
         make_tar('src/main/assets/private.mp3', tar_dirs, args.ignore_path)
@@ -255,9 +313,13 @@ main.py that loads it.''')
     url_scheme = 'kivy'
 
     # Prepare some variables for templating process
+    res_dir = "src/main/res"
+    # bootstrap is lbry so we def need these
     default_icon = 'templates/lbry-icon.png'
     default_presplash = 'templates/kivy-presplash.jpg'
-    shutil.copy(args.icon or default_icon, 'src/main/res/drawable/icon.png')
+    shutil.copy(args.icon or default_icon,
+                join(res_dir, 'drawable/icon.png')
+                )
     shutil.copy(args.presplash or default_presplash,
                 'src/main/res/drawable/presplash.jpg')
 
@@ -324,9 +386,15 @@ main.py that loads it.''')
         sticky = 'sticky' in options
 
         service_names.append(name)
+        # 12/18/18
+        service_target_path = \
+            'src/main/java/{}/Service{}.java'.format(
+                args.package.replace(".", "/"),
+                name.capitalize()
+            )
         render(
             'Service.tmpl.java',
-            'src/main/java/{}/Service{}.java'.format(args.package.replace(".", "/"), name.capitalize()),
+            service_target_path,
             name=name,
             entrypoint=entrypoint,
             args=args,
@@ -359,11 +427,13 @@ main.py that loads it.''')
 
     # Copy the AndroidManifest.xml to the dist root dir so that ant
     # can also use it
+    manifest_path = "src/main/AndroidManifest.xml"
     if exists('AndroidManifest.xml'):
         remove('AndroidManifest.xml')
     shutil.copy(join('src', 'main', 'AndroidManifest.xml'),
                 'AndroidManifest.xml')
 
+    # String resources
     render(
         'strings.tmpl.xml',
         'src/main/res/values/strings.xml',
@@ -423,10 +493,11 @@ main.py that loads it.''')
         args=args,
         versioned_name=versioned_name)
 
-    render(
-        'custom_rules.tmpl.xml',
-        'custom_rules.xml',
-        args=args)
+    if exists(join("templates", "custom_rules.tmpl.xml")):
+        render(
+            'custom_rules.tmpl.xml',
+            'custom_rules.xml',
+            args=args)
 
 
     if args.sign:
@@ -435,9 +506,44 @@ main.py that loads it.''')
         if exists('build.properties'):
             os.remove('build.properties')
 
-def parse_args(args=None):
+    # # Apply java source patches if any are present:
+    # if exists(join('src', 'patches')):
+    #     print("Applying Java source code patches...")
+    #     for patch_name in os.listdir(join('src', 'patches')):
+    #         patch_path = join('src', 'patches', patch_name)
+    #         print("Applying patch: " + str(patch_path))
+    #         try:
+    #             subprocess.check_output([
+    #                 # -N: insist this is FORWARd patch, don't reverse apply
+    #                 # -p1: strip first path component
+    #                 # -t: batch mode, don't ask questions
+    #                 "patch", "-N", "-p1", "-t", "-i", patch_path
+    #             ])
+    #         except subprocess.CalledProcessError as e:
+    #             if e.returncode == 1:
+    #                 # Return code 1 means it didn't apply, this will
+    #                 # usually mean it is already applied.
+    #                 print("Warning: failed to apply patch (" +
+    #                       "exit code 1), " +
+    #                       "assuming it is already applied: " +
+    #                       str(patch_path)
+    #                       )
+    #             else:
+    #                 raise e
+
+def parse_args_and_make_package(args=None):
     global BLACKLIST_PATTERNS, WHITELIST_PATTERNS, PYTHON
-    default_android_api = 12
+    default_android_api = 21
+
+    # Get the default minsdk, equal to the NDK API that this dist it built against
+    with open('dist_info.json', 'r') as fileh:
+        info = json.load(fileh)
+        if 'ndk_api' not in info:
+            print('Failed to read ndk_api from dist info')
+            default_android_api = 12  # The old default before ndk_api was introduced
+        else:
+            default_android_api = info['ndk_api']
+            ndk_api = info['ndk_api']
     import argparse
     ap = argparse.ArgumentParser(description='''\
 Package a Python application for Android.
@@ -505,6 +611,10 @@ tools directory of the Android SDK.
                     default=join(curdir, 'whitelist.txt'),
                     help=('Use a whitelist file to prevent blacklisting of '
                           'file in the final APK'))
+    ap.add_argument('--release', dest='build_mode', action='store_const',
+                    const='release', default='debug',
+                    help='Build your app as a non-debug release build. '
+                         '(Disables gdb debugging among other things)')
     ap.add_argument('--add-jar', dest='add_jar', action='append',
                     help=('Add a Java .jar to the libs, so you can access its '
                           'classes with pyjnius. You can specify this '
@@ -551,8 +661,18 @@ tools directory of the Android SDK.
     if args.name and args.name[0] == '"' and args.name[-1] == '"':
         args.name = args.name[1:-1]
 
-    # if args.sdk_version == -1:
-    #     args.sdk_version = args.min_sdk_version
+    if ndk_api != args.min_sdk_version:
+        print(('WARNING: --minsdk argument does not match the api that is '
+               'compiled against. Only proceed if you know what you are '
+               'doing, otherwise use --minsdk={} or recompile against api '
+               '{}').format(ndk_api, args.min_sdk_version))
+        if not args.allow_minsdk_ndkapi_mismatch:
+            print('You must pass --allow-minsdk-ndkapi-mismatch to build '
+                  'with --minsdk different to the target NDK api from the '
+                  'build step')
+            exit(1)
+        else:
+            print('Proceeding with --minsdk not matching build target api')
 
     if args.sdk_version != -1:
         print('WARNING: Received a --sdk argument, but this argument is '
@@ -573,14 +693,14 @@ tools directory of the Android SDK.
     if args.try_system_python_compile:
         # Hardcoding python2.7 is okay for now, as python3 skips the
         # compilation anyway
-        if not exists('crystax_python'):
-            python_executable = 'python2.7'
-            try:
-                subprocess.call([python_executable, '--version'])
-            except (OSError, subprocess.CalledProcessError):
-                pass
-            else:
-                PYTHON = python_executable
+
+        python_executable = 'python2.7'
+        try:
+            subprocess.call([python_executable, '--version'])
+        except (OSError, subprocess.CalledProcessError):
+            pass
+        else:
+            PYTHON = python_executable
 
     if args.no_compile_pyo:
         PYTHON = None
@@ -598,10 +718,13 @@ tools directory of the Android SDK.
                         if x.strip() and not x.strip().startswith('#')]
         WHITELIST_PATTERNS += patterns
 
+    if args.private is None:
+        print('Need --private directory with app files to package for .apk')
+        exit(1)
     make_package(args)
 
     return args
 
 
 if __name__ == "__main__":
-    parse_args()
+    parse_args_and_make_package()
