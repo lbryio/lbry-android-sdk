@@ -209,7 +209,7 @@ p4a.local_recipes = ./recipes
 #p4a.hook =
 
 # (str) Bootstrap to use for android builds
-p4a.bootstrap = lbry
+p4a.bootstrap = service_library
 
 
 #
