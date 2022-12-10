@@ -117,6 +117,7 @@ subprojects {
 //}
 
 afterEvaluate {
+    println("Components: " + components*.name)
     publishing {
         publications {
             release(MavenPublication) {
@@ -165,7 +166,7 @@ dependencies {
     {%- endfor -%}
     {%- if args.depends -%}
     {%- for depend in args.depends %}
-    compile '{{ depend }}'
+    implementation '{{ depend }}'
     {%- endfor %}
     {%- endif %}
 }
