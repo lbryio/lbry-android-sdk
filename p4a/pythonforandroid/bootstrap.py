@@ -371,6 +371,7 @@ class Bootstrap:
         env = arch.get_env()
         tokens = shlex.split(env['STRIP'])
         strip = sh.Command(tokens[0])
+        logger.info(f'Strip Env {env["STRIP"]} strip {strip} env {env}')
         if len(tokens) > 1:
             strip = strip.bake(tokens[1:])
 
