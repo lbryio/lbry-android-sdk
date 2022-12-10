@@ -962,6 +962,7 @@ tools directory of the Android SDK.
               '--launcher (SDL2 bootstrap only)' +
               'to have something to launch inside the .apk!')
         sys.exit(1)
+        print('ARGS ARGS ARGS', args)
     make_package(args)
 
     return args
