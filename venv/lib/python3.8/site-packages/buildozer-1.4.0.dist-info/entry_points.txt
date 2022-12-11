@@ -1,0 +1,3 @@
+[console_scripts]
+buildozer = buildozer.scripts.client:main
+buildozer-remote = buildozer.scripts.remote:main

@@ -15,14 +15,10 @@
 #include <errno.h>
 
 #include "bootstrap_name.h"
+
 #ifndef BOOTSTRAP_USES_NO_SDL_HEADERS
 #include "SDL.h"
-#ifndef BOOTSTRAP_NAME_PYGAME
 #include "SDL_opengles2.h"
-#endif
-#endif
-#ifdef BOOTSTRAP_NAME_PYGAME
-#include "jniwrapperstuff.h"
 #endif
 #include "android/log.h"
 
@@ -169,26 +165,14 @@ int main(int argc, char *argv[]) {
   // Set up the python path
   char paths[256];
 
-  char crystax_python_dir[256];
-  snprintf(crystax_python_dir, 256,
-           "%s/crystax_python", getenv("ANDROID_UNPACK"));
   char python_bundle_dir[256];
   snprintf(python_bundle_dir, 256,
            "%s/_python_bundle", getenv("ANDROID_UNPACK"));
-  if (dir_exists(crystax_python_dir) || dir_exists(python_bundle_dir)) {
-    if (dir_exists(crystax_python_dir)) {
-        LOGP("crystax_python exists");
-        snprintf(paths, 256,
-                "%s/stdlib.zip:%s/modules",
-                crystax_python_dir, crystax_python_dir);
-    }
-
-    if (dir_exists(python_bundle_dir)) {
-        LOGP("_python_bundle dir exists");
-        snprintf(paths, 256,
-                "%s/stdlib.zip:%s/modules",
-                python_bundle_dir, python_bundle_dir);
-    }
+  if (dir_exists(python_bundle_dir)) {
+    LOGP("_python_bundle dir exists");
+    snprintf(paths, 256,
+            "%s/stdlib.zip:%s/modules",
+            python_bundle_dir, python_bundle_dir);
 
     LOGP("calculated paths to be...");
     LOGP(paths);
@@ -200,24 +184,11 @@ int main(int argc, char *argv[]) {
 
         LOGP("set wchar paths...");
   } else {
-      // We do not expect to see crystax_python any more, so no point
-      // reminding the user about it. If it does exist, we'll have
-      // logged it earlier.
-      LOGP("_python_bundle does not exist");
+      LOGP("_python_bundle does not exist...this not looks good, all python"
+           " recipes should have this folder, should we expect a crash soon?");
   }
 
   Py_Initialize();
-
-#if PY_MAJOR_VERSION < 3
-  // Can't Py_SetPath in python2 but we can set PySys_SetPath, which must
-  // be applied after Py_Initialize rather than before like Py_SetPath
-  #if PY_MICRO_VERSION >= 15
-    // Only for python native-build
-    PySys_SetPath(paths);
-  #endif
-  PySys_SetArgv(argc, argv);
-#endif
-
   LOGP("Initialized python");
 
   /* ensure threads will work.
@@ -236,34 +207,8 @@ int main(int argc, char *argv[]) {
    * replace sys.path with our path
    */
   PyRun_SimpleString("import sys, posix\n");
-  if (dir_exists("lib")) {
-    /* If we built our own python, set up the paths correctly.
-     * This is only the case if we are using the python2legacy recipe
-     */
-    LOGP("Setting up python from ANDROID_APP_PATH");
-    PyRun_SimpleString("private = posix.environ['ANDROID_APP_PATH']\n"
-                       "argument = posix.environ['ANDROID_ARGUMENT']\n"
-                       "sys.path[:] = [ \n"
-                       "    private + '/lib/python27.zip', \n"
-                       "    private + '/lib/python2.7/', \n"
-                       "    private + '/lib/python2.7/lib-dynload/', \n"
-                       "    private + '/lib/python2.7/site-packages/', \n"
-                       "    argument ]\n");
-  }
 
   char add_site_packages_dir[256];
-  if (dir_exists(crystax_python_dir)) {
-    snprintf(add_site_packages_dir, 256,
-             "sys.path.append('%s/site-packages')",
-             crystax_python_dir);
-
-    PyRun_SimpleString("import sys\n"
-                       "sys.argv = ['notaninterpreterreally']\n"
-                       "from os.path import realpath, join, dirname");
-    PyRun_SimpleString(add_site_packages_dir);
-    /* "sys.path.append(join(dirname(realpath(__file__)), 'site-packages'))") */
-    PyRun_SimpleString("sys.path = ['.'] + sys.path");
-  }
 
   if (dir_exists(python_bundle_dir)) {
     snprintf(add_site_packages_dir, 256,
@@ -281,13 +226,13 @@ int main(int argc, char *argv[]) {
   PyRun_SimpleString(
       "class LogFile(object):\n"
       "    def __init__(self):\n"
-      "        self.buffer = ''\n"
+      "        self.__buffer = ''\n"
       "    def write(self, s):\n"
-      "        s = self.buffer + s\n"
-      "        lines = s.split(\"\\n\")\n"
+      "        s = self.__buffer + s\n"
+      "        lines = s.split('\\n')\n"
       "        for l in lines[:-1]:\n"
-      "            androidembed.log(l)\n"
-      "        self.buffer = lines[-1]\n"
+      "            androidembed.log(l.replace('\\x00', ''))\n"
+      "        self.__buffer = lines[-1]\n"
       "    def flush(self):\n"
       "        return\n"
       "sys.stdout = sys.stderr = LogFile()\n"
@@ -306,14 +251,10 @@ int main(int argc, char *argv[]) {
    */
   LOGP("Run user program, change dir and execute entrypoint");
 
-  /* Get the entrypoint, search the .pyo then .py
+  /* Get the entrypoint, search the .pyc then .py
    */
   char *dot = strrchr(env_entrypoint, '.');
-#if PY_MAJOR_VERSION > 2
   char *ext = ".pyc";
-#else
-  char *ext = ".pyo";
-#endif
   if (dot <= 0) {
     LOGP("Invalid entrypoint, abort.");
     return -1;
@@ -329,21 +270,17 @@ int main(int argc, char *argv[]) {
       entrypoint[strlen(env_entrypoint) - 1] = '\0';
       LOGP(entrypoint);
       if (!file_exists(entrypoint)) {
-        LOGP("Entrypoint not found (.pyc/.pyo, fallback on .py), abort");
+        LOGP("Entrypoint not found (.pyc, fallback on .py), abort");
         return -1;
       }
     } else {
       strcpy(entrypoint, env_entrypoint);
     }
   } else if (!strcmp(dot, ".py")) {
-    /* if .py is passed, check the pyo version first */
+    /* if .py is passed, check the pyc version first */
     strcpy(entrypoint, env_entrypoint);
     entrypoint[strlen(env_entrypoint) + 1] = '\0';
-#if PY_MAJOR_VERSION > 2
     entrypoint[strlen(env_entrypoint)] = 'c';
-#else
-    entrypoint[strlen(env_entrypoint)] = 'o';
-#endif
     if (!file_exists(entrypoint)) {
       /* fallback on pure python version */
       if (!file_exists(env_entrypoint)) {
@@ -353,7 +290,7 @@ int main(int argc, char *argv[]) {
       strcpy(entrypoint, env_entrypoint);
     }
   } else {
-    LOGP("Entrypoint have an invalid extension (must be .py or .pyc/.pyo), abort.");
+    LOGP("Entrypoint have an invalid extension (must be .py or .pyc), abort.");
     return -1;
   }
   // LOGP("Entrypoint is:");
@@ -374,8 +311,7 @@ int main(int argc, char *argv[]) {
     ret = 1;
     PyErr_Print(); /* This exits with the right code if SystemExit. */
     PyObject *f = PySys_GetObject("stdout");
-    if (PyFile_WriteString(
-            "\n", f)) /* python2 used Py_FlushLine, but this no longer exists */
+    if (PyFile_WriteString("\n", f))
       PyErr_Clear();
   }
 

@@ -10,16 +10,16 @@ import glob
 
 class PyZMQRecipe(CythonRecipe):
     name = 'pyzmq'
-    version = 'master'
-    url = 'https://github.com/zeromq/pyzmq/archive/{version}.zip'
+    version = '20.0.0'
+    url = 'https://github.com/zeromq/pyzmq/archive/v{version}.zip'
     site_packages_name = 'zmq'
-    depends = ['libzmq']
+    depends = ['setuptools', 'libzmq']
     cython_args = ['-Izmq/utils',
                    '-Izmq/backend/cython',
                    '-Izmq/devices']
 
     def get_recipe_env(self, arch=None):
-        env = super(PyZMQRecipe, self).get_recipe_env(arch)
+        env = super().get_recipe_env(arch)
         # TODO: fix hardcoded path
         # This is required to prevent issue with _io.so import.
         # hostpython = self.get_recipe('hostpython2', self.ctx)
@@ -43,9 +43,9 @@ class PyZMQRecipe(CythonRecipe):
 [global]
 zmq_prefix = {}
 skip_check_zmq = True
-""".format(libzmq_prefix))
+""".format(libzmq_prefix).encode())
 
-        return super(PyZMQRecipe, self).build_cython_components(arch)
+        return super().build_cython_components(arch)
 
         with current_directory(self.get_build_dir(arch.arch)):
             hostpython = sh.Command(self.hostpython_location)

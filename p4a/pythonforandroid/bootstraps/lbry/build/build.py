@@ -435,7 +435,7 @@ main.py that loads it.''')
         if exists('build.properties'):
             os.remove('build.properties')
 
-def parse_args(args=None):
+def parse_args_and_make_package(args=None):
     global BLACKLIST_PATTERNS, WHITELIST_PATTERNS, PYTHON
     default_android_api = 12
     import argparse
@@ -604,4 +604,4 @@ tools directory of the Android SDK.
 
 
 if __name__ == "__main__":
-    parse_args()
+    parse_args_and_make_package()

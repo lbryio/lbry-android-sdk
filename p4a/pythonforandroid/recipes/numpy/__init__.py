@@ -1,57 +1,74 @@
 from pythonforandroid.recipe import CompiledComponentsPythonRecipe
+from pythonforandroid.logger import shprint, info
+from pythonforandroid.util import current_directory
 from multiprocessing import cpu_count
 from os.path import join
+import glob
+import sh
+import shutil
 
 
 class NumpyRecipe(CompiledComponentsPythonRecipe):
 
-    version = '1.15.1'
+    version = '1.22.3'
     url = 'https://pypi.python.org/packages/source/n/numpy/numpy-{version}.zip'
     site_packages_name = 'numpy'
-    depends = [('python2', 'python3', 'python3crystax')]
+    depends = ['setuptools', 'cython']
+    install_in_hostpython = True
+    call_hostpython_via_targetpython = False
 
     patches = [
-        join('patches', 'fix-numpy.patch'),
-        join('patches', 'prevent_libs_check.patch'),
-        join('patches', 'ar.patch'),
-        join('patches', 'lib.patch'),
-        join('patches', 'python-fixes.patch')
+        join("patches", "remove-default-paths.patch"),
+        join("patches", "add_libm_explicitly_to_build.patch"),
+        join("patches", "ranlib.patch"),
     ]
+
+    def get_recipe_env(self, arch=None, with_flags_in_cc=True):
+        env = super().get_recipe_env(arch, with_flags_in_cc)
+
+        # _PYTHON_HOST_PLATFORM declares that we're cross-compiling
+        # and avoids issues when building on macOS for Android targets.
+        env["_PYTHON_HOST_PLATFORM"] = arch.command_prefix
+
+        # NPY_DISABLE_SVML=1 allows numpy to build for non-AVX512 CPUs
+        # See: https://github.com/numpy/numpy/issues/21196
+        env["NPY_DISABLE_SVML"] = "1"
+
+        return env
+
+    def _build_compiled_components(self, arch):
+        info('Building compiled components in {}'.format(self.name))
+
+        env = self.get_recipe_env(arch)
+        with current_directory(self.get_build_dir(arch.arch)):
+            hostpython = sh.Command(self.hostpython_location)
+            shprint(hostpython, 'setup.py', self.build_cmd, '-v',
+                    _env=env, *self.setup_extra_args)
+            build_dir = glob.glob('build/lib.*')[0]
+            shprint(sh.find, build_dir, '-name', '"*.o"', '-exec',
+                    env['STRIP'], '{}', ';', _env=env)
+
+    def _rebuild_compiled_components(self, arch, env):
+        info('Rebuilding compiled components in {}'.format(self.name))
+
+        hostpython = sh.Command(self.real_hostpython_location)
+        shprint(hostpython, 'setup.py', 'clean', '--all', '--force', _env=env)
+        shprint(hostpython, 'setup.py', self.build_cmd, '-v', _env=env,
+                *self.setup_extra_args)
 
     def build_compiled_components(self, arch):
         self.setup_extra_args = ['-j', str(cpu_count())]
-        super(NumpyRecipe, self).build_compiled_components(arch)
+        self._build_compiled_components(arch)
         self.setup_extra_args = []
 
     def rebuild_compiled_components(self, arch, env):
         self.setup_extra_args = ['-j', str(cpu_count())]
-        super(NumpyRecipe, self).rebuild_compiled_components(arch, env)
+        self._rebuild_compiled_components(arch, env)
         self.setup_extra_args = []
 
-    def get_recipe_env(self, arch):
-        env = super(NumpyRecipe, self).get_recipe_env(arch)
-
-        flags = " -L{} --sysroot={}".format(
-            join(self.ctx.ndk_platform, 'usr', 'lib'),
-            self.ctx.ndk_platform
-        )
-
-        py_ver = self.ctx.python_recipe.major_minor_version_string
-        py_inc_dir = self.ctx.python_recipe.include_root(arch.arch)
-        py_lib_dir = self.ctx.python_recipe.link_root(arch.arch)
-        if self.ctx.ndk == 'crystax':
-            src_dir = join(self.ctx.ndk_dir, 'sources')
-            flags += " -I{}".format(join(src_dir, 'crystax', 'include'))
-            flags += " -L{}".format(join(src_dir, 'crystax', 'libs', arch.arch))
-        flags += ' -I{}'.format(py_inc_dir)
-        flags += ' -L{} -lpython{}'.format(py_lib_dir, py_ver)
-        if 'python3' in self.ctx.python_recipe.name:
-            flags += 'm'
-
-        if flags not in env['CC']:
-            env['CC'] += flags
-        if flags not in env['LD']:
-            env['LD'] += flags + ' -shared'
+    def get_hostrecipe_env(self, arch):
+        env = super().get_hostrecipe_env(arch)
+        env['RANLIB'] = shutil.which('ranlib')
         return env
 
 

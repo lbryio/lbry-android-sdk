@@ -2,7 +2,7 @@
 # Broadcast receiver bridge
 
 from jnius import autoclass, PythonJavaClass, java_method
-from android.config import JAVA_NAMESPACE, JNI_NAMESPACE
+from android.config import JAVA_NAMESPACE, JNI_NAMESPACE, ACTIVITY_CLASS_NAME, SERVICE_CLASS_NAME
 
 
 class BroadcastReceiver(object):
@@ -20,7 +20,7 @@ class BroadcastReceiver(object):
             self.callback(context, intent)
 
     def __init__(self, callback, actions=None, categories=None):
-        super(BroadcastReceiver, self).__init__()
+        super().__init__()
         self.callback = callback
 
         if not actions and not categories:
@@ -28,7 +28,7 @@ class BroadcastReceiver(object):
 
         def _expand_partial_name(partial_name):
             if '.' in partial_name:
-                return partial_name # Its actually a full dotted name
+                return partial_name  # Its actually a full dotted name
             else:
                 name = 'ACTION_{}'.format(partial_name.upper())
                 if not hasattr(Intent, name):
@@ -61,8 +61,8 @@ class BroadcastReceiver(object):
         Handler = autoclass('android.os.Handler')
         self.handlerthread.start()
         self.handler = Handler(self.handlerthread.getLooper())
-        self.context.registerReceiver(self.receiver, self.receiver_filter, None,
-                self.handler)
+        self.context.registerReceiver(
+            self.receiver, self.receiver_filter, None, self.handler)
 
     def stop(self):
         self.context.unregisterReceiver(self.receiver)
@@ -72,8 +72,7 @@ class BroadcastReceiver(object):
     def context(self):
         from os import environ
         if 'PYTHON_SERVICE_ARGUMENT' in environ:
-            PythonService = autoclass(JAVA_NAMESPACE + '.PythonService')
+            PythonService = autoclass(SERVICE_CLASS_NAME)
             return PythonService.mService
-        PythonActivity = autoclass(JAVA_NAMESPACE + '.PythonActivity')
+        PythonActivity = autoclass(ACTIVITY_CLASS_NAME)
         return PythonActivity.mActivity
-
