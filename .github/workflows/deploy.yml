@@ -2,7 +2,7 @@ name: Publish Assets
 
 on:
   push: 
-    branches: [master, upgrade_p4a]
+    branches: [master, upgrade_p4a_clean]
 
 jobs:
   build_arm64_aar:
