@@ -166,7 +166,7 @@ dependencies {
     {%- endfor -%}
     {%- if args.depends -%}
     {%- for depend in args.depends %}
-    compile '{{ depend }}'
+    implement '{{ depend }}'
     {%- endfor %}
     {%- endif %}
 }

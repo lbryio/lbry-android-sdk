@@ -1,31 +1,65 @@
-from __future__ import print_function
-
-from os.path import (join, realpath, dirname, expanduser, exists,
-                     split, isdir)
+from os.path import (
+    abspath, join, realpath, dirname, expanduser, exists
+)
 from os import environ
 import copy
 import os
 import glob
-import sys
 import re
 import sh
+import shutil
 import subprocess
+from contextlib import suppress
 
 from pythonforandroid.util import (
-    current_directory, ensure_dir, get_virtualenv_executable,
-    BuildInterruptingException
+    current_directory, ensure_dir,
+    BuildInterruptingException,
 )
 from pythonforandroid.logger import (info, warning, info_notify, info_main, shprint)
 from pythonforandroid.archs import ArchARM, ArchARMv7_a, ArchAarch_64, Archx86, Archx86_64
+from pythonforandroid.pythonpackage import get_package_name
 from pythonforandroid.recipe import CythonRecipe, Recipe
 from pythonforandroid.recommendations import (
     check_ndk_version, check_target_api, check_ndk_api,
     RECOMMENDED_NDK_API, RECOMMENDED_TARGET_API)
+from pythonforandroid.androidndk import AndroidNDK
 
 
-class Context(object):
+def get_targets(sdk_dir):
+    if exists(join(sdk_dir, 'cmdline-tools', 'latest', 'bin', 'avdmanager')):
+        avdmanager = sh.Command(join(sdk_dir, 'cmdline-tools', 'latest', 'bin', 'avdmanager'))
+        targets = avdmanager('list', 'target').stdout.decode('utf-8').split('\n')
+
+    elif exists(join(sdk_dir, 'tools', 'bin', 'avdmanager')):
+        avdmanager = sh.Command(join(sdk_dir, 'tools', 'bin', 'avdmanager'))
+        targets = avdmanager('list', 'target').stdout.decode('utf-8').split('\n')
+    elif exists(join(sdk_dir, 'tools', 'android')):
+        android = sh.Command(join(sdk_dir, 'tools', 'android'))
+        targets = android('list').stdout.decode('utf-8').split('\n')
+    else:
+        raise BuildInterruptingException(
+            'Could not find `android` or `sdkmanager` binaries in Android SDK',
+            instructions='Make sure the path to the Android SDK is correct')
+    return targets
+
+
+def get_available_apis(sdk_dir):
+    targets = get_targets(sdk_dir)
+    apis = [s for s in targets if re.match(r'^ *API level: ', s)]
+    apis = [re.findall(r'[0-9]+', s) for s in apis]
+    apis = [int(s[0]) for s in apis if s]
+    return apis
+
+
+class Context:
     '''A build context. If anything will be built, an instance this class
     will be instantiated and used to hold all the build state.'''
+
+    # Whether to make a debug or release build
+    build_as_debuggable = False
+
+    # Whether to strip debug symbols in `.so` files
+    with_debug_symbols = False
 
     env = environ.copy()
     # the filepath of toolchain.py
@@ -36,25 +70,31 @@ class Context(object):
     # in which bootstraps are copied for building
     # and recipes are built
     build_dir = None
+
+    distribution = None
+    """The Distribution object representing the current build target location."""
+
     # the Android project folder where everything ends up
     dist_dir = None
+
     # where Android libs are cached after build
     # but before being placed in dists
     libs_dir = None
     aars_dir = None
 
+    # Whether setup.py or similar should be used if present:
+    use_setup_py = False
+
     ccache = None  # whether to use ccache
-    cython = None  # the cython interpreter name
 
-    ndk_platform = None  # the ndk platform directory
+    ndk = None
 
-    dist_name = None  # should be deprecated in favour of self.dist.dist_name
     bootstrap = None
     bootstrap_build_dir = None
 
     recipe_build_order = None  # Will hold the list of all built recipes
 
-    symlink_java_src = False  # If True, will symlink instead of copying during build
+    symlink_bootstrap_files = False  # If True, will symlink instead of copying during build
 
     java_build_tool = 'auto'
 
@@ -70,34 +110,33 @@ class Context(object):
     @property
     def libs_dir(self):
         # Was previously hardcoded as self.build_dir/libs
-        dir = join(self.build_dir, 'libs_collections',
-                   self.bootstrap.distribution.name)
-        ensure_dir(dir)
-        return dir
+        directory = join(self.build_dir, 'libs_collections',
+                         self.bootstrap.distribution.name)
+        ensure_dir(directory)
+        return directory
 
     @property
     def javaclass_dir(self):
         # Was previously hardcoded as self.build_dir/java
-        dir = join(self.build_dir, 'javaclasses',
-                   self.bootstrap.distribution.name)
-        ensure_dir(dir)
-        return dir
+        directory = join(self.build_dir, 'javaclasses',
+                         self.bootstrap.distribution.name)
+        ensure_dir(directory)
+        return directory
 
     @property
     def aars_dir(self):
-        dir = join(self.build_dir, 'aars', self.bootstrap.distribution.name)
-        ensure_dir(dir)
-        return dir
+        directory = join(self.build_dir, 'aars', self.bootstrap.distribution.name)
+        ensure_dir(directory)
+        return directory
 
     @property
     def python_installs_dir(self):
-        dir = join(self.build_dir, 'python-installs')
-        ensure_dir(dir)
-        return dir
+        directory = join(self.build_dir, 'python-installs')
+        ensure_dir(directory)
+        return directory
 
-    def get_python_install_dir(self):
-        dir = join(self.python_installs_dir, self.bootstrap.distribution.name)
-        return dir
+    def get_python_install_dir(self, arch):
+        return join(self.python_installs_dir, self.bootstrap.distribution.name, arch)
 
     def setup_dirs(self, storage_dir):
         '''Calculates all the storage and build dirs, and makes sure
@@ -185,8 +224,6 @@ class Context(object):
         if self._build_env_prepared:
             return
 
-        ok = True
-
         # Work out where the Android SDK is
         sdk_dir = None
         if user_sdk_dir:
@@ -202,10 +239,10 @@ class Context(object):
             possible_dirs = glob.glob(expanduser(join(
                 '~', '.buildozer', 'android', 'platform', 'android-sdk-*')))
             possible_dirs = [d for d in possible_dirs if not
-                             (d.endswith('.bz2') or d.endswith('.gz'))]
+                             d.endswith(('.bz2', '.gz'))]
             if possible_dirs:
                 info('Found possible SDK dirs in buildozer dir: {}'.format(
-                    ', '.join([d.split(os.sep)[-1] for d in possible_dirs])))
+                    ', '.join(d.split(os.sep)[-1] for d in possible_dirs)))
                 info('Will attempt to use SDK at {}'.format(possible_dirs[0]))
                 warning('This SDK lookup is intended for debug only, if you '
                         'use python-for-android much you should probably '
@@ -230,21 +267,10 @@ class Context(object):
         android_api = int(android_api)
         self.android_api = android_api
 
-        check_target_api(android_api, self.archs[0].arch)
-
-        if exists(join(sdk_dir, 'tools', 'bin', 'avdmanager')):
-            avdmanager = sh.Command(join(sdk_dir, 'tools', 'bin', 'avdmanager'))
-            targets = avdmanager('list', 'target').stdout.decode('utf-8').split('\n')
-        elif exists(join(sdk_dir, 'tools', 'android')):
-            android = sh.Command(join(sdk_dir, 'tools', 'android'))
-            targets = android('list').stdout.decode('utf-8').split('\n')
-        else:
-            raise BuildInterruptingException(
-                'Could not find `android` or `sdkmanager` binaries in Android SDK',
-                instructions='Make sure the path to the Android SDK is correct')
-        apis = [s for s in targets if re.match(r'^ *API level: ', s)]
-        apis = [re.findall(r'[0-9]+', s) for s in apis]
-        apis = [int(s[0]) for s in apis if s]
+        for arch in self.archs:
+            # Maybe We could remove this one in a near future (ARMv5 is definitely old)
+            check_target_api(android_api, arch)
+        apis = get_available_apis(self.sdk_dir)
         info('Available Android APIs are ({})'.format(
             ', '.join(map(str, apis))))
         if android_api in apis:
@@ -279,7 +305,7 @@ class Context(object):
                 '~', '.buildozer', 'android', 'platform', 'android-ndk-r*')))
             if possible_dirs:
                 info('Found possible NDK dirs in buildozer dir: {}'.format(
-                    ', '.join([d.split(os.sep)[-1] for d in possible_dirs])))
+                    ', '.join(d.split(os.sep)[-1] for d in possible_dirs)))
                 info('Will attempt to use NDK at {}'.format(possible_dirs[0]))
                 warning('This NDK lookup is intended for debug only, if you '
                         'use python-for-android much you should probably '
@@ -288,10 +314,7 @@ class Context(object):
         if ndk_dir is None:
             raise BuildInterruptingException('Android NDK dir was not specified')
         self.ndk_dir = realpath(ndk_dir)
-
         check_ndk_version(ndk_dir)
-
-        self.ndk = 'crystax' # force crystax detection
 
         ndk_api = None
         if user_ndk_api:
@@ -310,103 +333,32 @@ class Context(object):
 
         check_ndk_api(ndk_api, self.android_api)
 
-        virtualenv = get_virtualenv_executable()
-        if virtualenv is None:
-            raise IOError('Couldn\'t find a virtualenv executable, '
-                          'you must install this to use p4a.')
-        self.virtualenv = virtualenv
-        info('Found virtualenv at {}'.format(virtualenv))
+        self.ndk = AndroidNDK(self.ndk_dir)
 
         # path to some tools
-        self.ccache = sh.which("ccache")
+        self.ccache = shutil.which("ccache")
         if not self.ccache:
             info('ccache is missing, the build will not be optimized in the '
                  'future.')
-        for cython_fn in ("cython", "cython3", "cython2", "cython-2.7"):
-            cython = sh.which(cython_fn)
-            if cython:
-                self.cython = cython
-                break
-        else:
-            raise BuildInterruptingException('No cython binary found.')
-        if not self.cython:
-            ok = False
-            warning("Missing requirement: cython is not installed")
+        try:
+            subprocess.check_output([
+                "python3", "-m", "cython", "--help",
+            ])
+        except subprocess.CalledProcessError:
+            warning('Cython for python3 missing. If you are building for '
+                    ' a python 3 target (which is the default)'
+                    ' then THINGS WILL BREAK.')
 
-        # This would need to be changed if supporting multiarch APKs
-        arch = self.archs[0]
-        platform_dir = arch.platform_dir
-        toolchain_prefix = arch.toolchain_prefix
-        toolchain_version = None
-        self.ndk_platform = join(
-            self.ndk_dir,
-            'platforms',
-            'android-{}'.format(self.ndk_api),
-            platform_dir)
-        if not exists(self.ndk_platform):
-            warning('ndk_platform doesn\'t exist: {}'.format(
-                self.ndk_platform))
-            ok = False
-
-        py_platform = sys.platform
-        if py_platform in ['linux2', 'linux3']:
-            py_platform = 'linux'
-
-        toolchain_versions = []
-        toolchain_path = join(self.ndk_dir, 'toolchains')
-        if isdir(toolchain_path):
-            toolchain_contents = glob.glob('{}/{}-*'.format(toolchain_path,
-                                                            toolchain_prefix))
-            toolchain_versions = [split(path)[-1][len(toolchain_prefix) + 1:]
-                                  for path in toolchain_contents]
-        else:
-            warning('Could not find toolchain subdirectory!')
-            ok = False
-        toolchain_versions.sort()
-
-        toolchain_versions_gcc = []
-        for toolchain_version in toolchain_versions:
-            if toolchain_version[0].isdigit():
-                # GCC toolchains begin with a number
-                toolchain_versions_gcc.append(toolchain_version)
-
-        if toolchain_versions:
-            info('Found the following toolchain versions: {}'.format(
-                toolchain_versions))
-            info('Picking the latest gcc toolchain, here {}'.format(
-                toolchain_versions_gcc[-1]))
-            toolchain_version = toolchain_versions_gcc[-1]
-        else:
-            warning('Could not find any toolchain for {}!'.format(
-                toolchain_prefix))
-            ok = False
-
-        self.toolchain_prefix = toolchain_prefix
-        self.toolchain_version = toolchain_version
-        # Modify the path so that sh finds modules appropriately
-        environ['PATH'] = (
-            '{ndk_dir}/toolchains/{toolchain_prefix}-{toolchain_version}/'
-            'prebuilt/{py_platform}-x86/bin/:{ndk_dir}/toolchains/'
-            '{toolchain_prefix}-{toolchain_version}/prebuilt/'
-            '{py_platform}-x86_64/bin/:{ndk_dir}:{sdk_dir}/'
-            'tools:{path}').format(
-                sdk_dir=self.sdk_dir, ndk_dir=self.ndk_dir,
-                toolchain_prefix=toolchain_prefix,
-                toolchain_version=toolchain_version,
-                py_platform=py_platform, path=environ.get('PATH'))
-
-        for executable in ("pkg-config", "autoconf", "automake", "libtoolize",
-                           "tar", "bzip2", "unzip", "make", "gcc", "g++"):
-            if not sh.which(executable):
-                warning("Missing executable: {} is not installed".format(
-                    executable))
-
-        if not ok:
-            raise BuildInterruptingException(
-                'python-for-android cannot continue due to the missing executables above')
+        self.env["PATH"] = ":".join(
+            [
+                self.ndk.llvm_bin_dir,
+                self.ndk_dir,
+                f"{self.sdk_dir}/tools",
+                environ.get("PATH"),
+            ]
+        )
 
     def __init__(self):
-        super(Context, self).__init__()
         self.include_dirs = []
 
         self._build_env_prepared = False
@@ -417,11 +369,11 @@ class Context(object):
         self._ndk_api = None
         self.ndk = None
 
-        self.toolchain_prefix = None
-        self.toolchain_version = None
-
         self.local_recipes = None
         self.copy_libs = False
+
+        self.activity_class_name = u'org.kivy.android.PythonActivity'
+        self.service_class_name = u'org.kivy.android.PythonService'
 
         # this list should contain all Archs, it is pruned later
         self.archs = (
@@ -452,26 +404,24 @@ class Context(object):
         if not self.archs:
             raise BuildInterruptingException('Asked to compile for no Archs, so failing.')
         info('Will compile for the following archs: {}'.format(
-            ', '.join([arch.arch for arch in self.archs])))
+            ', '.join(arch.arch for arch in self.archs)))
 
-    def prepare_bootstrap(self, bs):
-        bs.ctx = self
-        self.bootstrap = bs
+    def prepare_bootstrap(self, bootstrap):
+        if not bootstrap:
+            raise TypeError("None is not allowed for bootstrap")
+        bootstrap.ctx = self
+        self.bootstrap = bootstrap
         self.bootstrap.prepare_build_dir()
         self.bootstrap_build_dir = self.bootstrap.build_dir
 
-    def prepare_dist(self, name):
-        self.dist_name = name
-        self.bootstrap.prepare_dist_dir(self.dist_name)
+    def prepare_dist(self):
+        self.bootstrap.prepare_dist_dir()
 
-    def get_site_packages_dir(self, arch=None):
+    def get_site_packages_dir(self, arch):
         '''Returns the location of site-packages in the python-install build
         dir.
         '''
-        if self.python_recipe.name == 'python2legacy':
-            return join(self.get_python_install_dir(),
-                        'lib', 'python2.7', 'site-packages')
-        return self.get_python_install_dir()
+        return self.get_python_install_dir(arch.arch)
 
     def get_libs_dir(self, arch):
         '''The libs dir for a given arch.'''
@@ -488,21 +438,10 @@ class Context(object):
             if not os.path.exists(name):
                 # Non-existing dir, cannot look this up.
                 return False
-            if os.path.exists(os.path.join(name, "setup.py")):
-                # Get name from setup.py:
-                name = subprocess.check_output([
-                    sys.executable, "setup.py", "--name"],
-                    cwd=name)
-                try:
-                    name = name.decode('utf-8', 'replace')
-                except AttributeError:
-                    pass
-                name = name.strip()
-                if len(name) == 0:
-                    # Failed to look up any meaningful name.
-                    return False
-            else:
-                # A folder with whatever, cannot look this up.
+            try:
+                name = get_package_name(os.path.abspath(name))
+            except ValueError:
+                # Failed to look up any meaningful name.
                 return False
 
         # Try to look up recipe by name:
@@ -517,7 +456,6 @@ class Context(object):
         return (exists(join(site_packages_dir, name)) or
                 exists(join(site_packages_dir, name + '.py')) or
                 exists(join(site_packages_dir, name + '.pyc')) or
-                exists(join(site_packages_dir, name + '.pyo')) or
                 exists(join(site_packages_dir, name + '.so')) or
                 glob.glob(join(site_packages_dir, name + '-*.egg')))
 
@@ -525,7 +463,9 @@ class Context(object):
         return not self.has_package(name, arch)
 
 
-def build_recipes(build_order, python_modules, ctx):
+def build_recipes(build_order, python_modules, ctx, project_dir,
+                  ignore_project_setup_py=False
+                 ):
     # Put recipes in correct build order
     info_notify("Recipe build order is {}".format(build_order))
     if python_modules:
@@ -565,13 +505,17 @@ def build_recipes(build_order, python_modules, ctx):
             else:
                 info('{} said it is already built, skipping'
                      .format(recipe.name))
+            recipe.install_libraries(arch)
 
         # 4) biglink everything
         info_main('# Biglinking object files')
-        if not ctx.python_recipe or not ctx.python_recipe.from_crystax:
+        if not ctx.python_recipe:
             biglink(ctx, arch)
         else:
-            info('NDK is crystax, skipping biglink (will this work?)')
+            warning(
+                "Context's python recipe found, "
+                "skipping biglink (will this work?)"
+            )
 
         # 5) postbuild packages
         info_main('# Postbuilding recipes')
@@ -580,46 +524,185 @@ def build_recipes(build_order, python_modules, ctx):
             recipe.postbuild_arch(arch)
 
     info_main('# Installing pure Python modules')
-    run_pymodules_install(ctx, python_modules)
+    for arch in ctx.archs:
+        run_pymodules_install(
+            ctx, arch, python_modules, project_dir,
+            ignore_setup_py=ignore_project_setup_py
+        )
 
-    return
+
+def project_has_setup_py(project_dir):
+    return (project_dir is not None and
+            (exists(join(project_dir, "setup.py")) or
+             exists(join(project_dir, "pyproject.toml"))
+            ))
 
 
-def run_pymodules_install(ctx, modules):
-    modules = list(filter(ctx.not_has_package, modules))
+def run_setuppy_install(ctx, project_dir, env=None, arch=None):
+    env = env or {}
 
-    if not modules:
-        info('There are no Python modules to install, skipping')
+    with current_directory(project_dir):
+        info('got setup.py or similar, running project install. ' +
+             '(disable this behavior with --ignore-setup-py)')
+
+        # Compute & output the constraints we will use:
+        info('Contents that will be used for constraints.txt:')
+        constraints = subprocess.check_output([
+            join(
+                ctx.build_dir, "venv", "bin", "pip"
+            ),
+            "freeze"
+        ], env=copy.copy(env))
+        with suppress(AttributeError):
+            constraints = constraints.decode("utf-8", "replace")
+        info(constraints)
+
+        # Make sure all packages found are fixed in version
+        # by writing a constraint file, to avoid recipes being
+        # upgraded & reinstalled:
+        with open('._tmp_p4a_recipe_constraints.txt', 'wb') as fileh:
+            fileh.write(constraints.encode("utf-8", "replace"))
+        try:
+
+            info('Populating venv\'s site-packages with '
+                 'ctx.get_site_packages_dir()...')
+
+            # Copy dist contents into site-packages for discovery.
+            # Why this is needed:
+            # --target is somewhat evil and messes with discovery of
+            # packages in PYTHONPATH if that also includes the target
+            # folder. So we need to use the regular virtualenv
+            # site-packages folder instead.
+            # Reference:
+            # https://github.com/pypa/pip/issues/6223
+            ctx_site_packages_dir = os.path.normpath(
+                os.path.abspath(ctx.get_site_packages_dir(arch))
+            )
+            venv_site_packages_dir = os.path.normpath(os.path.join(
+                ctx.build_dir, "venv", "lib", [
+                    f for f in os.listdir(os.path.join(
+                        ctx.build_dir, "venv", "lib"
+                    )) if f.startswith("python")
+                ][0], "site-packages"
+            ))
+            copied_over_contents = []
+            for f in os.listdir(ctx_site_packages_dir):
+                full_path = os.path.join(ctx_site_packages_dir, f)
+                if not os.path.exists(os.path.join(
+                            venv_site_packages_dir, f
+                        )):
+                    if os.path.isdir(full_path):
+                        shutil.copytree(full_path, os.path.join(
+                            venv_site_packages_dir, f
+                        ))
+                    else:
+                        shutil.copy2(full_path, os.path.join(
+                            venv_site_packages_dir, f
+                        ))
+                    copied_over_contents.append(f)
+
+            # Get listing of virtualenv's site-packages, to see the
+            # newly added things afterwards & copy them back into
+            # the distribution folder / build context site-packages:
+            previous_venv_contents = os.listdir(
+                venv_site_packages_dir
+            )
+
+            # Actually run setup.py:
+            info('Launching package install...')
+            shprint(sh.bash, '-c', (
+                "'" + join(
+                    ctx.build_dir, "venv", "bin", "pip"
+                ).replace("'", "'\"'\"'") + "' " +
+                "install -c ._tmp_p4a_recipe_constraints.txt -v ."
+            ).format(ctx.get_site_packages_dir(arch).
+                     replace("'", "'\"'\"'")),
+                    _env=copy.copy(env))
+
+            # Go over all new additions and copy them back:
+            info('Copying additions resulting from setup.py back '
+                 'into ctx.get_site_packages_dir()...')
+            new_venv_additions = []
+            for f in (set(os.listdir(venv_site_packages_dir)) -
+                      set(previous_venv_contents)):
+                new_venv_additions.append(f)
+                full_path = os.path.join(venv_site_packages_dir, f)
+                if os.path.isdir(full_path):
+                    shutil.copytree(full_path, os.path.join(
+                        ctx_site_packages_dir, f
+                    ))
+                else:
+                    shutil.copy2(full_path, os.path.join(
+                        ctx_site_packages_dir, f
+                    ))
+
+            # Undo all the changes we did to the venv-site packages:
+            info('Reverting additions to '
+                 'virtualenv\'s site-packages...')
+            for f in set(copied_over_contents + new_venv_additions):
+                full_path = os.path.join(venv_site_packages_dir, f)
+                if os.path.isdir(full_path):
+                    shutil.rmtree(full_path)
+                else:
+                    os.remove(full_path)
+        finally:
+            os.remove("._tmp_p4a_recipe_constraints.txt")
+
+
+def run_pymodules_install(ctx, arch, modules, project_dir=None,
+                          ignore_setup_py=False):
+    """ This function will take care of all non-recipe things, by:
+
+        1. Processing them from --requirements (the modules argument)
+           and installing them
+
+        2. Installing the user project/app itself via setup.py if
+           ignore_setup_py=True
+
+    """
+
+    info('*** PYTHON PACKAGE / PROJECT INSTALL STAGE FOR ARCH: {} ***'.format(arch))
+
+    modules = [m for m in modules if ctx.not_has_package(m, arch)]
+
+    # We change current working directory later, so this has to be an absolute
+    # path or `None` in case that we didn't supply the `project_dir` via kwargs
+    project_dir = abspath(project_dir) if project_dir else None
+
+    # Bail out if no python deps and no setup.py to process:
+    if not modules and (
+            ignore_setup_py or
+            project_dir is None or
+            not project_has_setup_py(project_dir)
+            ):
+        info('No Python modules and no setup.py to process, skipping')
         return
 
-    info('The requirements ({}) don\'t have recipes, attempting to install '
-         'them with pip'.format(', '.join(modules)))
-    info('If this fails, it may mean that the module has compiled '
-         'components and needs a recipe.')
+    # Output messages about what we're going to do:
+    if modules:
+        info(
+            "The requirements ({}) don\'t have recipes, attempting to "
+            "install them with pip".format(', '.join(modules))
+        )
+        info(
+            "If this fails, it may mean that the module has compiled "
+            "components and needs a recipe."
+        )
+    if project_dir is not None and \
+            project_has_setup_py(project_dir) and not ignore_setup_py:
+        info(
+            "Will process project install, if it fails then the "
+            "project may not be compatible for Android install."
+        )
 
-    venv = sh.Command(ctx.virtualenv)
+    # Use our hostpython to create the virtualenv
+    host_python = sh.Command(ctx.hostpython)
     with current_directory(join(ctx.build_dir)):
-        shprint(venv,
-                '--python=python{}.{}'.format(
-                    ctx.python_recipe.major_minor_version_string.partition(".")[0],
-                    ctx.python_recipe.major_minor_version_string.partition(".")[2]
-                    ),
-                'venv'
-               )
-
-        info('Creating a requirements.txt file for the Python modules')
-        with open('requirements.txt', 'w') as fileh:
-            for module in modules:
-                key = 'VERSION_' + module
-                if key in environ:
-                    line = '{}=={}\n'.format(module, environ[key])
-                else:
-                    line = '{}\n'.format(module)
-                fileh.write(line)
+        shprint(host_python, '-m', 'venv', 'venv')
 
         # Prepare base environment and upgrade pip:
-        base_env = copy.copy(os.environ)
-        base_env["PYTHONPATH"] = ctx.get_site_packages_dir()
+        base_env = dict(copy.copy(os.environ))
+        base_env["PYTHONPATH"] = ctx.get_site_packages_dir(arch)
         info('Upgrade pip to latest version')
         shprint(sh.bash, '-c', (
             "source venv/bin/activate && pip install -U pip"
@@ -628,7 +711,7 @@ def run_pymodules_install(ctx, modules):
         # Install Cython in case modules need it to build:
         info('Install Cython in case one of the modules needs it to build')
         shprint(sh.bash, '-c', (
-            "venv/bin/pip install Cython"
+            "venv/bin/pip install --upgrade Cython"
         ), _env=copy.copy(base_env))
 
         # Get environment variables for build (with CC/compiler set):
@@ -640,39 +723,56 @@ def run_pymodules_install(ctx, modules):
         env = copy.copy(base_env)
         env.update(recipe_env)
 
-        info('Installing Python modules with pip')
-        info('IF THIS FAILS, THE MODULES MAY NEED A RECIPE. '
-             'A reason for this is often modules compiling '
-             'native code that is unaware of Android cross-compilation '
-             'and does not work without additional '
-             'changes / workarounds.')
-
         # Make sure our build package dir is available, and the virtualenv
         # site packages come FIRST (so the proper pip version is used):
-        env["PYTHONPATH"] += ":" + ctx.get_site_packages_dir()
+        env["PYTHONPATH"] += ":" + ctx.get_site_packages_dir(arch)
         env["PYTHONPATH"] = os.path.abspath(join(
             ctx.build_dir, "venv", "lib",
             "python" + ctx.python_recipe.major_minor_version_string,
             "site-packages")) + ":" + env["PYTHONPATH"]
 
-        '''
-        # Do actual install:
-        shprint(sh.bash, '-c', (
-            "venv/bin/pip " +
-            "install -v --target '{0}' --no-deps -r requirements.txt"
-        ).format(ctx.get_site_packages_dir().replace("'", "'\"'\"'")),
-                _env=copy.copy(env))
-        '''
+        # Install the manually specified requirements first:
+        if not modules:
+            info('There are no Python modules to install, skipping')
+        else:
+            info('Creating a requirements.txt file for the Python modules')
+            with open('requirements.txt', 'w') as fileh:
+                for module in modules:
+                    key = 'VERSION_' + module
+                    if key in environ:
+                        line = '{}=={}\n'.format(module, environ[key])
+                    else:
+                        line = '{}\n'.format(module)
+                    fileh.write(line)
 
-        # use old install script
-        shprint(sh.bash, '-c', (
-            "source venv/bin/activate && env CC=/bin/false CXX=/bin/false "
-            "PYTHONPATH={0} pip install --target '{0}' --no-deps -r requirements.txt"
-        ).format(ctx.get_site_packages_dir()))
+            info('Installing Python modules with pip')
+            info(
+                "IF THIS FAILS, THE MODULES MAY NEED A RECIPE. "
+                "A reason for this is often modules compiling "
+                "native code that is unaware of Android cross-compilation "
+                "and does not work without additional "
+                "changes / workarounds."
+            )
+
+            shprint(sh.bash, '-c', (
+                "venv/bin/pip " +
+                "install -v --target '{0}' --no-deps -r requirements.txt"
+            ).format(ctx.get_site_packages_dir(arch).replace("'", "'\"'\"'")),
+                    _env=copy.copy(env))
+
+        # Afterwards, run setup.py if present:
+        if project_dir is not None and (
+                project_has_setup_py(project_dir) and not ignore_setup_py
+                ):
+            run_setuppy_install(ctx, project_dir, env, arch.arch)
+        elif not ignore_setup_py:
+            info("No setup.py found in project directory: " + str(project_dir))
 
         # Strip object files after potential Cython or native code builds:
-        standard_recipe.strip_object_files(ctx.archs[0], env,
-                                           build_dir=ctx.build_dir)
+        if not ctx.with_debug_symbols:
+            standard_recipe.strip_object_files(
+                arch, env, build_dir=ctx.build_dir
+            )
 
 
 def biglink(ctx, arch):
@@ -711,7 +811,7 @@ def biglink(ctx, arch):
 
     # Move to the directory containing crtstart_so.o and crtend_so.o
     # This is necessary with newer NDKs? A gcc bug?
-    with current_directory(join(ctx.ndk_platform, 'usr', 'lib')):
+    with current_directory(arch.ndk_lib_dir):
         do_biglink(
             join(ctx.get_libs_dir(arch.arch), 'libpymodules.so'),
             obj_dir.split(' '),
@@ -721,7 +821,9 @@ def biglink(ctx, arch):
             env=env)
 
 
-def biglink_function(soname, objs_paths, extra_link_dirs=[], env=None):
+def biglink_function(soname, objs_paths, extra_link_dirs=None, env=None):
+    if extra_link_dirs is None:
+        extra_link_dirs = []
     print('objs_paths are', objs_paths)
     sofiles = []
 
@@ -768,7 +870,9 @@ def biglink_function(soname, objs_paths, extra_link_dirs=[], env=None):
     shprint(cc, '-shared', '-O3', '-o', soname, *unique_args, _env=env)
 
 
-def copylibs_function(soname, objs_paths, extra_link_dirs=[], env=None):
+def copylibs_function(soname, objs_paths, extra_link_dirs=None, env=None):
+    if extra_link_dirs is None:
+        extra_link_dirs = []
     print('objs_paths are', objs_paths)
 
     re_needso = re.compile(r'^.*\(NEEDED\)\s+Shared library: \[lib(.*)\.so\]\s*$')
@@ -800,7 +904,7 @@ def copylibs_function(soname, objs_paths, extra_link_dirs=[], env=None):
     elif 'READELF' in os.environ:
         readelf = os.environ['READELF']
     else:
-        readelf = sh.which('readelf').strip()
+        readelf = shutil.which('readelf').strip()
     readelf = sh.Command(readelf).bake('-d')
 
     dest = dirname(soname)
@@ -896,5 +1000,4 @@ def copylibs_function(soname, objs_paths, extra_link_dirs=[], env=None):
                             '\n\t'.join(needed_libs))
 
     print('Copying libraries')
-    for lib in sofiles:
-        shprint(sh.cp, lib, dest)
+    shprint(sh.cp, *sofiles, dest)

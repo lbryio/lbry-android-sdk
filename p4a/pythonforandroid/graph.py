@@ -45,7 +45,7 @@ def get_dependency_tuple_list_for_recipe(recipe, blacklist=None):
     """
     if blacklist is None:
         blacklist = set()
-    assert(type(blacklist) == set)
+    assert type(blacklist) == set
     if recipe.depends is None:
         dependencies = []
     else:
@@ -130,7 +130,7 @@ def find_order(graph):
     '''
     while graph:
         # Find all items without a parent
-        leftmost = [l for l, s in graph.items() if not s]
+        leftmost = [name for name, dep in graph.items() if not dep]
         if not leftmost:
             raise ValueError('Dependency cycle detected! %s' % graph)
         # If there is more than one, sort them for predictable order
@@ -160,7 +160,7 @@ def obvious_conflict_checker(ctx, name_tuples, blacklist=None):
         current_to_be_added = list(to_be_added)
         to_be_added = []
         for (added_tuple, adding_recipe) in current_to_be_added:
-            assert(type(added_tuple) == tuple)
+            assert type(added_tuple) == tuple
             if len(added_tuple) > 1:
                 # No obvious commitment in what to add, don't check it itself
                 # but throw it into deps for later comparing against
@@ -293,7 +293,8 @@ def get_recipe_order_and_bootstrap(ctx, names, bs=None, blacklist=None):
         orders.append(list(order))
 
     # prefer python3 and SDL2 if available
-    orders.sort(key=lambda order: -('python3' in order) - ('sdl2' in order))
+    orders = sorted(orders,
+                    key=lambda order: -('python3' in order) - ('sdl2' in order))
 
     if not orders:
         raise BuildInterruptingException(

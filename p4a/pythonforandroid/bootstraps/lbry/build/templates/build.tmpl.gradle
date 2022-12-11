@@ -7,7 +7,7 @@ buildscript {
         maven { url "https://jitpack.io" }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.6.4'
+        classpath 'com.android.tools.build:gradle:7.1.2'
     }
 }
 
@@ -69,15 +69,15 @@ android {
     }
     {%- endif %}
 
-    buildTypes {
-        debug {
-        }
-        release {
-            {% if args.sign -%}
-            signingConfig signingConfigs.release
-            {%- endif %}
-        }
-    }
+//    buildTypes {
+//        debug {
+//        }
+//        release {
+//            {% if args.sign -%}
+//            signingConfig signingConfigs.release
+//            {%- endif %}
+//        }
+//    }
 
     sourceSets {
         main {
@@ -104,68 +104,68 @@ subprojects {
     }
 }
 
-nexusPublishing {
-    repositories {
-        sonatype {
-            stagingProfileId = sonatypeStagingProfileId
-            username = ossrhUsername
-            password = ossrhPassword
-            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
-        }
-    }
-}
+//nexusPublishing {
+//    repositories {
+//        sonatype {
+//            stagingProfileId = sonatypeStagingProfileId
+//            username = ossrhUsername
+//            password = ossrhPassword
+//            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+//            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+//        }
+//    }
+//}
 
-afterEvaluate {
-    publishing {
-        publications {
-            release(MavenPublication) {
-                groupId 'io.lbry'
-                artifactId 'lbrysdk64'
-                version '{{ args.version }}'
+//afterEvaluate {
+//    publishing {
+//        publications {
+//            release(MavenPublication) {
+//                groupId 'io.lbry'
+//                artifactId 'lbrysdk64'
+//                version '{{ args.version }}'
+//
+//                from components.release
+//
+//                pom {
+//                    name = 'LBRY SDK for Android'
+//                    description = 'The LBRY SDK packaged as an Android AAR'
+//                    url = 'https://github.com/lbryio/lbry-android-sdk'
+//                    licenses {
+//                        license {
+//                            name = 'MIT License'
+//                            url = 'https://raw.githubusercontent.com/lbryio/lbry-android-sdk/master/LICENSE'
+//                        }
+//                    }
+//                    developers {
+//                        developer {
+//                            id = 'akinwale'
+//                            name = 'Akinwale Ariwodola'
+//                            email = 'akinwale@lbry.com'
+//                        }
+//                    }
+//
+//                    scm {
+//                        url = 'https://github.com/lbryio/lbry-android-sdk'
+//                        connection = 'scm:git:github.com/lbryio/lbry-android-sdk.git'
+//                        developerConnection = 'scm:git:ssh://github.com/lbryio/lbry-android-sdk.git'
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
-                from components.release
-                
-                pom {
-                    name = 'LBRY SDK for Android'
-                    description = 'The LBRY SDK packaged as an Android AAR'
-                    url = 'https://github.com/lbryio/lbry-android-sdk'
-                    licenses {
-                        license {
-                            name = 'MIT License'
-                            url = 'https://raw.githubusercontent.com/lbryio/lbry-android-sdk/master/LICENSE'
-                        }
-                    }
-                    developers {
-                        developer {
-                            id = 'akinwale'
-                            name = 'Akinwale Ariwodola'
-                            email = 'akinwale@lbry.com'
-                        }
-                    }
-
-                    scm {
-                        url = 'https://github.com/lbryio/lbry-android-sdk'
-                        connection = 'scm:git:github.com/lbryio/lbry-android-sdk.git'
-                        developerConnection = 'scm:git:ssh://github.com/lbryio/lbry-android-sdk.git'
-                    }
-                }
-            }
-        }
-    }
-}
-
-signing {
-    sign publishing.publications
-}
+//signing {
+//    sign publishing.publications
+//}
 
 dependencies {
     {%- for aar in aars %}
-    compile(name: '{{ aar }}', ext: 'aar')
+    implementation (name: '{{ aar }}', ext: 'aar')
     {%- endfor -%}
     {%- if args.depends -%}
     {%- for depend in args.depends %}
-    compile '{{ depend }}'
+    implementation '{{ depend }}'
     {%- endfor %}
     {%- endif %}
 }

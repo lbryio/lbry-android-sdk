@@ -1,25 +1,24 @@
-diff --git a/jnius/jnius_jvm_android.pxi b/jnius/jnius_jvm_android.pxi
-index ac89fec..71daa43 100644
---- a/jnius/jnius_jvm_android.pxi
-+++ b/jnius/jnius_jvm_android.pxi
-@@ -1,5 +1,5 @@
+diff -Naur pyjnius.orig/jnius/env.py pyjnius/jnius/env.py
+--- pyjnius.orig/jnius/env.py	2022-05-28 11:16:02.000000000 +0200
++++ pyjnius/jnius/env.py	2022-05-28 11:18:30.000000000 +0200
+@@ -268,7 +268,7 @@
+ 
+ class AndroidJavaLocation(UnixJavaLocation):
+     def get_libraries(self):
+-        return ['SDL2', 'log']
++        return ['main', 'log']
+ 
+     def get_include_dirs(self):
+         # When cross-compiling for Android, we should not use the include dirs
+diff -Naur pyjnius.orig/jnius/jnius_jvm_android.pxi pyjnius/jnius/jnius_jvm_android.pxi
+--- pyjnius.orig/jnius/jnius_jvm_android.pxi	2022-05-28 11:16:02.000000000 +0200
++++ pyjnius/jnius/jnius_jvm_android.pxi	2022-05-28 11:17:17.000000000 +0200
+@@ -1,6 +1,6 @@
  # on android, rely on SDL to get the JNI env
--cdef extern JNIEnv *SDL_ANDROID_GetJNIEnv()
+-cdef extern JNIEnv *SDL_AndroidGetJNIEnv()
 +cdef extern JNIEnv *WebView_AndroidGetJNIEnv()
  
- cdef JNIEnv *get_platform_jnienv():
--    return SDL_ANDROID_GetJNIEnv()
-+    return <JNIEnv*>WebView_AndroidGetJNIEnv()
-diff --git a/setup.py b/setup.py
-index 740510f..0c8e55f 100644
---- a/setup.py
-+++ b/setup.py
-@@ -53,7 +53,7 @@ except ImportError:
  
- if PLATFORM == 'android':
-     # for android, we use SDL...
--    LIBRARIES = ['sdl', 'log']
-+    LIBRARIES = ['main', 'log']
-     LIBRARY_DIRS = ['libs/' + getenv('ARCH')]
- elif PLATFORM == 'darwin':
-     import subprocess
+ cdef JNIEnv *get_platform_jnienv() except NULL:
+-    return <JNIEnv*>SDL_AndroidGetJNIEnv()
++    return <JNIEnv*>WebView_AndroidGetJNIEnv()

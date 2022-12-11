@@ -3,13 +3,10 @@ from pythonforandroid.recipe import PythonRecipe
 
 
 class FlaskRecipe(PythonRecipe):
-    # The webserver of 'master' seems to fail
-    # after a little while on Android, so use
-    # 0.10.1 at least for now
-    version = '0.10.1'
+    version = '2.0.3'
     url = 'https://github.com/pallets/flask/archive/{version}.zip'
 
-    depends = [('python2', 'python3', 'python3crystax'), 'setuptools']
+    depends = ['setuptools']
 
     python_depends = ['jinja2', 'werkzeug', 'markupsafe', 'itsdangerous', 'click']
 

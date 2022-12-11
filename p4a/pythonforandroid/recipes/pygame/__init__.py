@@ -1,74 +1,67 @@
-
-from pythonforandroid.recipe import Recipe
-from pythonforandroid.util import current_directory, ensure_dir
-from pythonforandroid.logger import debug, shprint, info, warning
 from os.path import join
-import sh
-import glob
+
+from pythonforandroid.recipe import CompiledComponentsPythonRecipe
+from pythonforandroid.toolchain import current_directory
 
 
-class PygameRecipe(Recipe):
+class Pygame2Recipe(CompiledComponentsPythonRecipe):
+    """
+    Recipe to build apps based on SDL2-based pygame.
+
+    .. warning:: Some pygame functionality is still untested, and some
+        dependencies like freetype, postmidi and libjpeg are currently
+        not part of the build. It's usable, but not complete.
+    """
+
+    version = '2.1.0'
+    url = 'https://github.com/pygame/pygame/archive/{version}.tar.gz'
+
+    site_packages_name = 'pygame'
     name = 'pygame'
-    version = '1.9.1'
-    url = 'http://pygame.org/ftp/pygame-{version}release.tar.gz'
 
-    depends = ['python2legacy', 'sdl']
-    conflicts = ['sdl2']
-
-    patches = ['patches/fix-surface-access.patch',
-               'patches/fix-array-surface.patch',
-               'patches/fix-sdl-spam-log.patch']
-
-    def get_recipe_env(self, arch=None):
-        env = super(PygameRecipe, self).get_recipe_env(arch)
-        env['LDFLAGS'] = env['LDFLAGS'] + ' -L{}'.format(
-            self.ctx.get_libs_dir(arch.arch))
-        env['LDSHARED'] = join(self.ctx.root_dir, 'tools', 'liblink')
-        env['LIBLINK'] = 'NOTNONE'
-        env['NDKPLATFORM'] = self.ctx.ndk_platform
-
-        # Every recipe uses its own liblink path, object files are collected and biglinked later
-        liblink_path = join(self.get_build_container_dir(arch.arch), 'objects_{}'.format(self.name))
-        env['LIBLINK_PATH'] = liblink_path
-        ensure_dir(liblink_path)
-        return env
+    depends = ['sdl2', 'sdl2_image', 'sdl2_mixer', 'sdl2_ttf', 'setuptools', 'jpeg', 'png']
+    call_hostpython_via_targetpython = False  # Due to setuptools
+    install_in_hostpython = False
 
     def prebuild_arch(self, arch):
-        if self.is_patched(arch):
-            return
-        shprint(sh.cp, join(self.get_recipe_dir(), 'Setup'),
-                join(self.get_build_dir(arch.arch), 'Setup'))
-
-    def build_arch(self, arch):
-        env = self.get_recipe_env(arch)
-
-        env['CFLAGS'] = env['CFLAGS'] + ' -I{jni_path}/png -I{jni_path}/jpeg'.format(
-            jni_path=join(self.ctx.bootstrap.build_dir, 'jni'))
-        env['CFLAGS'] = env['CFLAGS'] + ' -I{jni_path}/sdl/include -I{jni_path}/sdl_mixer'.format(
-            jni_path=join(self.ctx.bootstrap.build_dir, 'jni'))
-        env['CFLAGS'] = env['CFLAGS'] + ' -I{jni_path}/sdl_ttf -I{jni_path}/sdl_image'.format(
-            jni_path=join(self.ctx.bootstrap.build_dir, 'jni'))
-        debug('pygame cflags', env['CFLAGS'])
-
-        env['LDFLAGS'] = env['LDFLAGS'] + ' -L{libs_path} -L{src_path}/obj/local/{arch} -lm -lz'.format(
-            libs_path=self.ctx.libs_dir, src_path=self.ctx.bootstrap.build_dir, arch=env['ARCH'])
-
-        env['LDSHARED'] = join(self.ctx.root_dir, 'tools', 'liblink')
-
+        super().prebuild_arch(arch)
         with current_directory(self.get_build_dir(arch.arch)):
-            info('hostpython is ' + self.ctx.hostpython)
-            hostpython = sh.Command(self.ctx.hostpython)
-            shprint(hostpython, 'setup.py', 'install', '-O2', _env=env,
-                    _tail=10, _critical=True)
+            setup_template = open(join("buildconfig", "Setup.Android.SDL2.in")).read()
+            env = self.get_recipe_env(arch)
+            env['ANDROID_ROOT'] = join(self.ctx.ndk.sysroot, 'usr')
 
-            info('strip is ' + env['STRIP'])
-            build_lib = glob.glob('./build/lib*')
-            assert len(build_lib) == 1
-            print('stripping pygame')
-            shprint(sh.find, build_lib[0], '-name', '*.o', '-exec',
-                    env['STRIP'], '{}', ';')
+            png = self.get_recipe('png', self.ctx)
+            png_lib_dir = join(png.get_build_dir(arch.arch), '.libs')
+            png_inc_dir = png.get_build_dir(arch)
 
-        warning('Should remove pygame tests etc. here, but skipping for now')
+            jpeg = self.get_recipe('jpeg', self.ctx)
+            jpeg_inc_dir = jpeg_lib_dir = jpeg.get_build_dir(arch.arch)
+
+            sdl_mixer_includes = ""
+            sdl2_mixer_recipe = self.get_recipe('sdl2_mixer', self.ctx)
+            for include_dir in sdl2_mixer_recipe.get_include_dirs(arch):
+                sdl_mixer_includes += f"-I{include_dir} "
+
+            setup_file = setup_template.format(
+                sdl_includes=(
+                    " -I" + join(self.ctx.bootstrap.build_dir, 'jni', 'SDL', 'include') +
+                    " -L" + join(self.ctx.bootstrap.build_dir, "libs", str(arch)) +
+                    " -L" + png_lib_dir + " -L" + jpeg_lib_dir + " -L" + arch.ndk_lib_dir_versioned),
+                sdl_ttf_includes="-I"+join(self.ctx.bootstrap.build_dir, 'jni', 'SDL2_ttf'),
+                sdl_image_includes="-I"+join(self.ctx.bootstrap.build_dir, 'jni', 'SDL2_image'),
+                sdl_mixer_includes=sdl_mixer_includes,
+                jpeg_includes="-I"+jpeg_inc_dir,
+                png_includes="-I"+png_inc_dir,
+                freetype_includes=""
+            )
+            open("Setup", "w").write(setup_file)
+
+    def get_recipe_env(self, arch):
+        env = super().get_recipe_env(arch)
+        env['USE_SDL2'] = '1'
+        env["PYGAME_CROSS_COMPILE"] = "TRUE"
+        env["PYGAME_ANDROID"] = "TRUE"
+        return env
 
 
-recipe = PygameRecipe()
+recipe = Pygame2Recipe()

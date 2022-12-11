@@ -435,7 +435,7 @@ main.py that loads it.''')
         if exists('build.properties'):
             os.remove('build.properties')
 
-def parse_args(args=None):
+def parse_args_and_make_package(args=None):
     global BLACKLIST_PATTERNS, WHITELIST_PATTERNS, PYTHON
     default_android_api = 12
     import argparse
@@ -505,6 +505,10 @@ tools directory of the Android SDK.
                     default=join(curdir, 'whitelist.txt'),
                     help=('Use a whitelist file to prevent blacklisting of '
                           'file in the final APK'))
+    ap.add_argument('--release', dest='build_mode', action='store_const',
+                    const='release', default='debug',
+                    help='Build your app as a non-debug release build. '
+                         '(Disables gdb debugging among other things)')
     ap.add_argument('--add-jar', dest='add_jar', action='append',
                     help=('Add a Java .jar to the libs, so you can access its '
                           'classes with pyjnius. You can specify this '
@@ -604,4 +608,4 @@ tools directory of the Android SDK.
 
 
 if __name__ == "__main__":
-    parse_args()
+    parse_args_and_make_package()
